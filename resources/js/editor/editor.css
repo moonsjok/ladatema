@@ -1,0 +1,133 @@
+/* resources/js/editor/editor.css */
+
+/* Style pour la barre d'outils sticky */
+.sticky-toolbar {
+    position: -webkit-sticky; /* Compatibilité avec Safari */
+    position: sticky;
+    top: 0; /* Fixe la barre d’outils en haut lorsqu’elle atteint le bord supérieur */
+    z-index: 10; /* Assure qu’elle reste au-dessus du contenu */
+    background-color: #f8f9fa; /* Fond similaire à celui de la barre d’outils */
+    border-bottom: 1px solid #dee2e6; /* Ligne de séparation pour distinction */
+    padding: 0.5rem; /* Ajout d’un léger padding */
+}
+
+/* Ajout d'une ombre pour un effet visuel */
+.sticky-toolbar:before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), transparent);
+    pointer-events: none;
+}
+
+/* Reste des styles inchangés */
+.editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.editor-toolbar .btn-group {
+    display: inline-flex;
+}
+
+/* Styles de l'éditeur (inchangés) */
+.editor {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 10px;
+    min-height: 200px;
+    outline: none;
+}
+
+.editor:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+
+/* Style pour la modal personnalisée */
+/* Base pour toutes les modals */
+.modal-custom {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1050; /* Sit on top, ajusté pour être au-dessus d'autres éléments */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Contenu de la modal */
+.modal-custom .modal-dialog {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 600px;
+    border-radius: 0.3rem; /* Ajout pour un look plus moderne */
+}
+
+/* Bouton de fermeture */
+.modal-custom .btn-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    line-height: 1; /* Pour aligner correctement l'icône de fermeture */
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.modal-custom .btn-close:hover,
+.modal-custom .btn-close:focus {
+    color: black;
+    text-decoration: none;
+    outline: none; /* Enlève le focus outline */
+}
+
+/* Styles spécifiques pour chaque modal si nécessaire */
+.modal-video .modal-dialog {
+    /* Styles spécifiques pour la modal vidéo si besoin */
+}
+
+.modal-image .modal-dialog {
+    /* Styles spécifiques pour la modal image si besoin */
+}
+
+.modal-link .modal-dialog {
+    /* Styles spécifiques pour la modal lien si besoin */
+}
+
+.modal-color-picker .modal-dialog {
+    /* Styles spécifiques pour le sélecteur de couleur si besoin */
+    max-width: 300px; /* Exemple, ajustez selon vos besoins */
+}
+
+/* Conteneur pour la vidéo pour s'assurer qu'elle s'adapte correctement */
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 */
+    padding-top: 30px;
+    height: 0;
+    overflow: hidden;
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}

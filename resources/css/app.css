@@ -1,0 +1,255 @@
+/*resouces/css/app.js */
+@import 'bootstrap';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import "datatables.net-bs5/css/dataTables.bootstrap5.min.css";
+
+
+
+
+
+/* Variables CSS pour les couleurs principales */
+:root {
+    --primary-color: #0E2E72; /* Bleu foncé */
+    --secondary-color: #122860; /* Bleu clair */
+    --accent-color: #676B72; /* Orange */
+    --font-primary: 'Montserrat', sans-serif;
+    --font-secondary: 'Gotham', sans-serif;
+}
+
+/* Redéfinition des couleurs pour les éléments de Bootstrap */
+.color-primary {
+    color: var(--primary-color) !important;
+}
+
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.border-primary {
+    border-color: var(--primary-color) !important;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    color: #fff;
+    background-color: var(--secondary-color); /* Utilisation de la couleur secondaire pour l'effet hover */
+    border-color: var(--secondary-color);
+}
+
+.btn-primary:focus, .btn-primary.focus {
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color), 0.5);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    color: #fff;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Assurez-vous que tous les éléments qui utilisent primary sont également mis à jour */
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+/* Pour les autres variations comme les liens */
+
+a.text-primary:hover, a.text-primary:focus {
+    color: var(--secondary-color) !important;
+}
+
+a{color:var(--primary-color);}
+a:hover,a:focus{color:var(--secondary-color);}
+
+/* Pour les badges */
+.badge-primary {
+    color: #fff;
+    background-color: var(--primary-color);
+}
+
+/* Pour les alertes */
+.alert-primary {
+    color: #002a43;
+    background-color: #cce5ff;
+    border-color: #b8daff;
+}
+
+.alert-primary hr {
+    border-top-color: #9fcdff;
+}
+
+.alert-primary .alert-link {
+    color: #000f1a;
+}
+/* Styles globaux */
+body {
+    font-family: var(--font-primary);
+    color: var(--primary-color);
+    background-color: #f8f9fa;
+}
+
+.text-justify {
+    text-align: justify;
+}
+
+textarea{
+    min-height: 300px !important;
+}
+
+.main-content{
+   margin: 0;
+   background-color: white;
+}
+
+footer.footer{
+    text-align: center;
+    padding: 20px;
+    color: black;
+}
+
+.recap{
+    padding:10px;
+    background-color: var(--bs-primary);
+    color: white;
+    min-height: 200px;
+    border-radius: 10px;
+}
+
+
+
+
+
+
+body{
+    font-family: Arial, Helvetica, sans-serif;
+}
+.text-justify {
+    text-align: justify;
+}
+
+textarea{
+    min-height: 30px !important;
+}
+.main-content{
+   margin: 0;
+   background-color: white;
+}
+
+footer.footer{
+    text-align: center;
+    padding: 20px;
+    color: black;
+}
+
+.recap{
+    padding:10px;
+    background-color: var(--bs-primary);
+    color: white;
+    min-height: 200px;
+    border-radius: 10px;
+}
+
+/* HEADER */
+.dashboard-page-header {
+    height: 60px !important;
+    width: 100% !important;
+}
+
+.sidebar{
+    min-height: 100vh;
+}
+
+/* SIDEBAR HEADING */
+.sidebar .sidebar-heading {
+    color: #d9d9d9;
+    text-shadow: -1px -1px 1px rgba(255, 255, 255, 0.1), 1px 1px 1px rgba(0, 0, 0, 0.5);
+    border-bottom: 3px solid var(--bs-info);
+    font-weight: bold;
+}
+
+/* DEFAULT LINK STYLE */
+.sidebar .nav-link {
+    color: var(--secondary-color);
+    margin: 5px 0;
+    margin-left: -15px;
+    padding: 10px;
+    border-bottom: 3px solid #f0f3f3;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* HOVER AND ACTIVE STATE FOR LINKS */
+.sidebar .nav-link:hover,
+.sidebar .active-link {
+    background-color: #f0f0f0;
+    color: var(--secondary-color);
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    font-weight: bold;
+    border-bottom: 3px solid var(--primary-color);
+}
+
+/* ICONS STYLE (HOVER & ACTIVE STATES) */
+.sidebar .active-link .bi,
+.sidebar .nav-item .nav-link:hover .bi {
+    margin-right: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 14px;
+    border-radius: 5px; /* Rounded icon */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), 
+                5px 5px 0px 0px var(--secondary-color); /* Relief effect */
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* LOGOUT LINK */
+.sidebar .nav-link.logout {
+    color: var(--bs-danger);
+    font-weight: bold;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* HOVER EFFECT ON LOGOUT LINK */
+.sidebar .nav-link.logout:hover {
+    color: var(--bs-danger);
+    border-bottom: 3px solid var(--bs-danger);
+}
+
+/* LOGOUT ICON HOVER */
+.sidebar .nav-link.logout:hover .bi {
+    margin-right: 10px;
+    border-radius: 5px; /* Rounded icon */
+    background-color: var(--bs-danger);
+    color: white;
+    padding: 14px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), 
+                5px 5px 0px 0px rgba(255, 0, 0, 1);
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* SIDEBAR OFFCANVAS HEADER */
+.sidebar .offcanvas-header {
+    border-bottom: 1px solid gray;
+}
+
+/* SIDEBAR SUBMENU COLLAPSE */
+.sidebar .submenu {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s ease;
+}
+
+.sidebar .submenu.open {
+    max-height: 500px;
+}
+
+
+

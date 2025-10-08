@@ -1,0 +1,32 @@
+<IfModule mod_rewrite.c>
+    # Active la réécriture d'URL
+    RewriteEngine On
+
+    # Forcer l'utilisation de HTTPS
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    <IfModule mod_negotiation.c>
+        # Désactive MultiViews et Indexes pour éviter des conflits avec Laravel
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    # Gérer l'en-tête d'autorisation pour les API et l'authentification
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Supprimer les slashes de fin d'URL pour les fichiers et routes Laravel
+    RewriteCond %{REQUEST_URI} .+/+$
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.+)/$ /$1 [R=301,L]
+
+    # Assurer l'accès aux fichiers statiques de Vite (CSS, JS, fonts, etc.)
+    RewriteCond %{REQUEST_URI} ^/build/assets/ [NC]
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule .* - [L]
+
+    # Rediriger toutes les autres requêtes vers index.php (Front Controller)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
