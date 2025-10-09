@@ -23,6 +23,7 @@ use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\AnswerController;
 use App\Http\Middleware\CheckRole;
+use App\Http\Controllers\Auth\VerificationController;
 
 
 use App\Http\Controllers\PartnerController;
@@ -52,10 +53,13 @@ Route::get('/email/verify', function () {
     return view('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
 
-Route::get('/email/verify/{id}/{hash}', [\App\Http\Controllers\Auth\VerificationController::class, 'verify'])
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
     ->middleware(['auth', 'signed'])->name('verification.verify');
 
-Route::post('/email/resend', [\App\Http\Controllers\Auth\VerificationController::class, 'resend'])
+Route::post('/complete/profile', [VerificationController::class, 'completeprofile'])
+    ->middleware(['auth', 'throttle:6,1'])->name('verification.completeprofile');
+
+Route::post('/email/resend', [VerificationController::class, 'resend'])
     ->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 // ✅ Mot de passe oublié / Réinitialisation
@@ -95,8 +99,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return response('File not found.', 404);
     });
 
-    // ✅ Gestion du profil
-    Route::resource('profile', ProfileController::class);
+    // ✅ Gestion du profil pour mettre ajour les informations utilisateur
+    Route::get('/profile/complete', [ProfileController::class, 'showForm'])->name('profile.complete');
+    Route::post('/profile/complete', [ProfileController::class, 'submitForm'])->name('profile.complete.submit');
+
 
     // ✅ Consultation de cours (pour tous les utilisateurs connectés)
     Route::get('course/{course}/viewer/{chapterId?}', [CourseController::class, 'courseViewer'])->name('course-viewer');
@@ -154,11 +160,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/video', [SecureController::class, 'store'])->name('video.store');
 
         // ✅ Gestion des des souscriptions
-    Route::get('/subscriptions/students', [SubscriptionController::class, 'listStudentSubscriptions'])->name('subscriptions.students');
-    // New views: overview and separate lists
-    Route::get('/subscriptions/overview', [SubscriptionController::class, 'subscriptionsOverview'])->name('subscriptions.overview');
-    Route::get('/subscriptions/students/without', [SubscriptionController::class, 'studentsWithoutView'])->name('subscriptions.students.without');
-    Route::get('/subscriptions/students/with', [SubscriptionController::class, 'studentsWithView'])->name('subscriptions.students.with');
+        Route::get('/subscriptions/students', [SubscriptionController::class, 'listStudentSubscriptions'])->name('subscriptions.students');
+        // New views: overview and separate lists
+        Route::get('/subscriptions/overview', [SubscriptionController::class, 'subscriptionsOverview'])->name('subscriptions.overview');
+        Route::get('/subscriptions/students/without', [SubscriptionController::class, 'studentsWithoutView'])->name('subscriptions.students.without');
+        Route::get('/subscriptions/students/with', [SubscriptionController::class, 'studentsWithView'])->name('subscriptions.students.with');
         Route::put('/subscriptions/{subscription}/validate', [SubscriptionController::class, 'validateSubscription'])->name('subscriptions.validate');
         Route::post('/subscriptions/reminder/for/{user}', [SubscriptionController::class, 'sendReminderEmail'])->name('send.reminder.email');
     });
