@@ -2,9 +2,22 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
+    <meta name="google-site-verification" content="5BOQ4bTH9YaLF4VaLVHRX651Rmh5mWeG0fcOuIY4uvE" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NRX94N6MM5"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+
+        gtag('config', 'G-NRX94N6MM5');
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ env('APP_NAME') }} .::. @yield('page-title')</title>
+    {{-- <title>{{ env('APP_NAME') }} .::. @yield('page-title')</title> --}}
     <link rel="apple-touch-icon" sizes="57x57" href="{{ asset('apple-icon-57x57.png') }}">
     <link rel="apple-touch-icon" sizes="60x60" href="{{ asset('apple-icon-60x60.png') }}">
     <link rel="apple-touch-icon" sizes="72x72" href="{{ asset('apple-icon-72x72.png') }}">
@@ -25,7 +38,14 @@
 
     <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @if(app()->environment('local'))
+            <!-- Développement : utiliser HTTP localhost -->
+            <script type="module" src="http://localhost:5173/@vite/client"></script>
+            <script type="module" src="http://localhost:5173/resources/js/app.js"></script>
+            <link rel="stylesheet" href="http://localhost:5173/resources/css/app.css">
+        @else
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @endif
     @endif
 
     <!-- Livewire Styles -->

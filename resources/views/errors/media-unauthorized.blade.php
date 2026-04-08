@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accès non autorisé</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+    <div class="container vh-100 d-flex align-items-center justify-content-center">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-body text-center p-5">
+                        <div class="mb-4">
+                            <i class="bi bi-lock-fill text-danger" style="font-size: 4rem;"></i>
+                        </div>
+                        
+                        <h3 class="card-title text-danger mb-3">Accès non autorisé</h3>
+                        
+                        <p class="card-text text-muted mb-4">
+                            {{ $message ?? 'Vous devez être connecté pour accéder à ce fichier.' }}
+                        </p>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{{ $redirect ?? route('login') }}" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                            </a>
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-house"></i> Accueil
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Si vous pensez qu'il s'agit d'une erreur, 
+                        <a href="{{ route('dashboard') }}">contactez l'administrateur</a>.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -29,7 +29,14 @@
     <script src="{{ asset('vendor/jquery-3.6.0.min.js') }}"></script>
     <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @if(app()->environment('local'))
+            <!-- Développement : utiliser HTTP localhost -->
+            <script type="module" src="http://localhost:5173/@vite/client"></script>
+            <script type="module" src="http://localhost:5173/resources/js/app.js"></script>
+            <link rel="stylesheet" href="http://localhost:5173/resources/css/app.css">
+        @else
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @endif
     @endif
 
     <!-- Livewire Styles -->

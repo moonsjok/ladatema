@@ -40,22 +40,43 @@ return new class extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
+            // Vérifier si l'index composite existe avant de le supprimer
             if (Schema::hasColumn('users', 'prenoms') && Schema::hasColumn('users', 'nom')) {
-                $table->dropIndex('users_prenoms_nom_index');
+                try {
+                    $table->dropIndex('users_prenoms_nom_index');
+                } catch (\Exception $e) {
+                    // L'index n'existe pas, on continue
+                }
             }
 
+            // Vérifier si l'index fulltext existe avant de le supprimer
             try {
                 $driver = DB::getDriverName();
                 if ($driver === 'mysql') {
-                    $table->dropFullText('users_name_fulltext');
+                    // Vérifier si l'index fulltext existe dans la base de données
+                    $indexExists = DB::select("
+                        SELECT COUNT(*) as count 
+                        FROM information_schema.statistics 
+                        WHERE table_schema = DATABASE() 
+                        AND table_name = 'users' 
+                        AND index_name = 'users_name_fulltext'
+                    ");
+                    
+                    if ($indexExists[0]->count > 0) {
+                        $table->dropFullText('users_name_fulltext');
+                    }
                 }
             } catch (\Exception $e) {
-                // ignore
+                // L'index n'existe pas ou erreur, on continue
             }
         });
 
         Schema::table('subscriptions', function (Blueprint $table) {
-            $table->dropIndex('subscriptions_is_validated_index');
+            try {
+                $table->dropIndex('subscriptions_is_validated_index');
+            } catch (\Exception $e) {
+                // L'index n'existe pas, on continue
+            }
         });
     }
 };

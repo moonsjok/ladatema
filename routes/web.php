@@ -91,6 +91,55 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/upload-image', [MediaController::class, 'upload']);
     Route::post('/upload-video', [MediaController::class, 'upload']);
 
+    // ✅ Accès sécurisé aux médias (uniquement pour utilisateurs connectés)
+    Route::get('/media-file/{media}', function ($mediaId) {
+        if (!auth()->check()) {
+            return response()->view('errors.media-unauthorized', [
+                'message' => 'Vous devez être connecté pour accéder à ce fichier.',
+                'redirect' => route('login')
+            ], 401);
+        }
+
+        try {
+            $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::findOrFail($mediaId);
+            
+            // Vérifier si le média est public ou appartient à l'utilisateur
+            if (!$media->getCustomProperty('is_public', false) && 
+                ($media->model_type !== \App\Models\User::class || $media->model_id !== auth()->id())) {
+                
+                return response()->view('errors.media-forbidden', [
+                    'message' => 'Ce fichier est privé ou ne vous appartient pas.'
+                ], 403);
+            }
+
+            return response()->file($media->getPath());
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->view('errors.media-not-found', [
+                'message' => 'Le fichier demandé n\'existe pas ou a été supprimé.'
+            ], 404);
+        } catch (\Illuminate\Filesystem\FileNotFoundException $e) {
+            return response()->view('errors.media-not-found', [
+                'message' => 'Le fichier physique n\'existe plus. Le média a peut-être été remplacé récemment.'
+            ], 404);
+        } catch (\Exception $e) {
+            // Masquer les détails techniques pour des raisons de sécurité
+            \Log::error('Erreur accès média: ' . $e->getMessage());
+            return response()->view('errors.media-not-found', [
+                'message' => 'Une erreur est survenue lors de l\'accès au fichier. Veuillez réessayer plus tard.'
+            ], 404);
+        }
+    })->name('media.file.secure');
+
+    // ✅ CRUD complet pour les médias par type
+    Route::get('/media/{type}', [MediaController::class, 'index'])->name('media.index');
+    Route::get('/media/{type}/data', [MediaController::class, 'getData'])->name('media.data');
+    Route::get('/media/{type}/create', [MediaController::class, 'create'])->name('media.create');
+    Route::post('/media/{type}', [MediaController::class, 'store'])->name('media.store');
+    Route::get('/media/{type}/{mediaId}', [MediaController::class, 'show'])->name('media.show');
+    Route::get('/media/{type}/{mediaId}/edit', [MediaController::class, 'edit'])->name('media.edit');
+    Route::put('/media/{type}/{mediaId}', [MediaController::class, 'update'])->name('media.update');
+    Route::delete('/media/{type}/{mediaId}', [MediaController::class, 'destroy'])->name('media.destroy');
+
     // ✅ Accès aux fichiers stockés
     Route::get('/file/{file}', function ($file) {
         if (Storage::exists('public/' . $file)) {
@@ -106,6 +155,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ✅ Consultation de cours (pour tous les utilisateurs connectés)
     Route::get('course/{course}/viewer/{chapterId?}', [CourseController::class, 'courseViewer'])->name('course-viewer');
+
+    // ✅ Routes de test pour le débogage
+    Route::get('/test-collections', function () {
+        if (!auth()->check()) return redirect('/login');
+        
+        $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::all();
+        $collections = $media->groupBy('collection_name');
+        
+        $output = "<h1>Collections de médias</h1>";
+        foreach ($collections as $collection => $items) {
+            $output .= "<h2>Collection: $collection (" . $items->count() . " fichiers)</h2>";
+            $output .= "<ul>";
+            foreach ($items as $item) {
+                $output .= "<li>ID: {$item->id} - Nom: {$item->name} - MIME: {$item->mime_type} - Taille: " . number_format($item->size / 1024 / 1024, 2) . "MB</li>";
+            }
+            $output .= "</ul>";
+        }
+        
+        return $output;
+    })->name('test.collections');
 
     // 🔒 Routes réservées aux rôles "dev" et "owner"
     Route::middleware([CheckRole::class . ':dev,owner'])->group(function () {
@@ -156,7 +225,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/video/{videoName}', [SecureController::class, 'showVideo'])->name('video.show');
         Route::get('/video/{videoName}/delete', [SecureController::class, 'deleteVideo'])->name('video.delete');
         Route::post('/video/{videoName}/delete', [SecureController::class, 'deleteVideo']);
-        Route::get('/ajouter/une/create', [SecureController::class, 'create'])->name('video.create');
+        Route::get('/ajouter/une/video', [SecureController::class, 'create'])->name('video.create');
         Route::post('/video', [SecureController::class, 'store'])->name('video.store');
 
         // ✅ Gestion des des souscriptions

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Plyr</title>
+    <script src="http://localhost:5173/@vite/client"></script>
+    <script type="module" src="http://localhost:5173/resources/js/app.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Test Plyr Video Player</h1>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h3>Vidéo test</h3>
+                <video id="test-video" controls>
+                    <source src="https://ladatema.kom/media-file/1" type="video/mp4">
+                    Votre navigateur ne supporte pas les vidéos.
+                </video>
+            </div>
+            
+            <div class="col-md-6">
+                <h3>Informations</h3>
+                <div id="plyr-info">
+                    <p>Chargement de Plyr...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier si Plyr est chargé
+            setTimeout(function() {
+                if (typeof Plyr !== 'undefined') {
+                    document.getElementById('plyr-info').innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Plyr est bien chargé !</strong><br>
+                            Version: ${Plyr.VERSION || 'Inconnue'}<br>
+                            Lecteurs initialisés: ${document.querySelectorAll('.plyr').length}
+                        </div>
+                    `;
+                    
+                    // Initialiser manuellement un lecteur pour le test
+                    const player = new Plyr('#test-video', {
+                        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+                    });
+                    
+                    console.log('Plyr player initialized:', player);
+                } else {
+                    document.getElementById('plyr-info').innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Plyr n\'est pas chargé</strong><br>
+                            Vérifiez la console pour les erreurs.
+                        </div>
+                    `;
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

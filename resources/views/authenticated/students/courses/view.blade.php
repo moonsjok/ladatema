@@ -58,37 +58,76 @@
         <script>
             document.addEventListener("DOMContentLoaded", function() {
                 const userAgent = navigator.userAgent.toLowerCase();
+                
+                // Détection améliorée des navigateurs
                 const isChrome = /chrome/.test(userAgent) && !/edge|opr|brave|firefox|safari/.test(userAgent);
+                const isFirefox = /firefox/.test(userAgent) && !/seamonkey/.test(userAgent);
+                const isEdge = /edg/.test(userAgent);
+                const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+                const isOpera = /opera/.test(userAgent) || /opr/.test(userAgent);
+                const isBrave = /brave/.test(userAgent);
+                
+                // Vérifier si c'est un navigateur moderne
+                const isModernBrowser = isChrome || isFirefox || isEdge || (isSafari && /version\/([0-9]+)/.test(userAgent) && parseInt(/version\/([0-9]+)/.exec(userAgent)[1]) >= 14);
+                
+                // Informations de débogage
+                console.log('Détection navigateur:', {
+                    userAgent: userAgent,
+                    isChrome: isChrome,
+                    isFirefox: isFirefox,
+                    isEdge: isEdge,
+                    isSafari: isSafari,
+                    isOpera: isOpera,
+                    isBrave: isBrave,
+                    isModernBrowser: isModernBrowser
+                });
 
-                if (!isChrome) {
-                    // 👉 Affiche le bandeau permanent
+                if (!isModernBrowser) {
+                    // 👉 Affiche le bandeau pour navigateurs non supportés
+                    const browserName = isFirefox ? 'Firefox' : 
+                                     isEdge ? 'Edge' : 
+                                     isSafari ? 'Safari' : 
+                                     isOpera ? 'Opera' : 
+                                     isBrave ? 'Brave' : 'Navigateur inconnu';
+                    
                     document.getElementById('browser-banner').style.display = 'block';
-
-                    // 👉 Affiche SweetAlert sauf si l’utilisateur a déjà cliqué sur "J’ai compris"
-                    if (!localStorage.getItem('chromeWarningDismissed')) {
+                    
+                    // 👉 Recommande Google Chrome SEULEMENT si Chrome n'est pas déjà utilisé
+                    if (!localStorage.getItem('browserWarningDismissed')) {
                         Swal.fire({
-                            icon: 'info',
-                            title: 'Navigateur recommandé',
-                            html: 'Pour une meilleure expérience, nous vous recommandons d’utiliser <b>Google Chrome</b>.<br><br>' +
-                                '<a href="https://www.google.com/chrome/" target="_blank">' +
-                                '<img src="https://www.google.com/chrome/static/images/favicons/favicon-96x96.png" width="32" class="me-2"> Télécharger </a>',
-                            confirmButtonText: 'J’ai compris',
+                            icon: 'warning',
+                            title: 'Compatibilité navigateur',
+                            html: `Pour une meilleure expérience, nous vous recommandons d'utiliser <b>Google Chrome</b>.<br><br>
+                                   Votre navigateur actuel : <b>${browserName}</b><br><br>
+                                   <a href="https://www.google.com/chrome/" target="_blank" class="btn btn-primary btn-sm me-2">
+                                       <i class="bi bi-google"></i> Télécharger Chrome
+                                   </a>`,
+                            confirmButtonText: 'J\'ai compris',
                             allowOutsideClick: false,
                             allowEscapeKey: false,
+                            showCancelButton: true,
+                            cancelButtonText: 'Continuer avec ' + browserName,
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                // 👉 On enregistre que l'utilisateur a compris
-                                localStorage.setItem('chromeWarningDismissed', true);
+                                localStorage.setItem('browserWarningDismissed', true);
                             }
                         });
                     }
                 } else {
-                    // Optionnel : nettoyer le localStorage si Chrome est utilisé
-                    localStorage.removeItem('chromeWarningDismissed');
+                    // ✅ Navigateur moderne détecté - aucune alerte nécessaire
+                    localStorage.removeItem('browserWarningDismissed');
+                    console.log('✅ Navigateur moderne détecté:', {
+                        browser: isChrome ? 'Chrome' : 
+                               isFirefox ? 'Firefox' : 
+                               isEdge ? 'Edge' : 
+                               isSafari ? 'Safari' : 
+                               isOpera ? 'Opera' : 
+                               isBrave ? 'Brave' : 'Autre',
+                        version: isChrome ? navigator.userAgent.match(/Chrome\/([0-9.]+)/)?.[1] : 'N/A'
+                    });
                 }
             });
         </script>
     @endpush
-
 
 @endsection

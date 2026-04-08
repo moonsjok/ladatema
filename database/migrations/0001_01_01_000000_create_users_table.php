@@ -3,9 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-use App\Models\Profile;
 
 return new class extends Migration
 {
@@ -40,26 +37,6 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
-
-        // Initialisation des utilisateurs avec profils automatiques
-        $users = [
-            [
-                'name' => 'Super Admin',
-                'email' => 'moonsjokcorp@gmail.com',
-                'password' => Hash::make('Joel@6758/*-'),  // Utiliser un mot de passe sécurisé
-                'role' => 'dev',
-            ],
-            [
-                'name' => 'Ladatema',
-                'email' => 'ladatema@example.com',
-                'password' => Hash::make('password123'),  // Utiliser un mot de passe sécurisé
-                'role' => 'owner',
-            ],
-        ];
-
-        foreach ($users as $userData) {
-            $user = User::create($userData);
-        }
     }
 
     /**

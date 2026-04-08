@@ -8,13 +8,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 use App\Models\Subscription;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, InteractsWithMedia;
 
 
     protected $table = "users";
@@ -72,5 +74,51 @@ class User extends Authenticatable implements MustVerifyEmail
     public function souscriptions()
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Register media collections for User model
+     */
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('avatar')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+            ->singleFile()
+            ->registerMediaConversions(function (\Spatie\MediaLibrary\MediaCollections\Models\Media $media) {
+                $this
+                    ->addMediaConversion('thumb')
+                    ->width(100)
+                    ->height(100)
+                    ->sharpen(10);
+            });
+
+        $this
+            ->addMediaCollection('images')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+            ->registerMediaConversions(function (\Spatie\MediaLibrary\MediaCollections\Models\Media $media) {
+                $this
+                    ->addMediaConversion('thumbnail')
+                    ->width(150)
+                    ->height(150)
+                    ->sharpen(10);
+            });
+
+        $this
+            ->addMediaCollection('videos')
+            ->acceptsMimeTypes(['video/mp4', 'video/webm']);
+
+        $this
+            ->addMediaCollection('pdfs')
+            ->acceptsMimeTypes(['application/pdf']);
+
+        $this
+            ->addMediaCollection('txt_files')
+            ->acceptsMimeTypes(['text/plain', 'text/markdown']);
+
+        $this
+            ->addMediaCollection('documents')
+            ->acceptsMimeTypes(['application/pdf', 'text/plain', 'text/markdown'])
+            ->singleFile();
     }
 }

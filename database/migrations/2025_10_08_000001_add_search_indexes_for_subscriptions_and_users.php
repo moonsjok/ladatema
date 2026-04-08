@@ -29,16 +29,51 @@ return new class extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropIndex('users_prenoms_index');
-            $table->dropIndex('users_nom_index');
-            $table->dropIndex('users_email_index');
-            $table->dropIndex('users_phone_call_index');
+            // Vérifier si les index existent avant de les supprimer
+            try {
+                $table->dropIndex('users_prenoms_index');
+            } catch (\Exception $e) {
+                // L'index n'existe pas, on continue
+            }
+            
+            try {
+                $table->dropIndex('users_nom_index');
+            } catch (\Exception $e) {
+                // L'index n'existe pas, on continue
+            }
+            
+            try {
+                $table->dropIndex('users_email_index');
+            } catch (\Exception $e) {
+                // L'index n'existe pas, on continue
+            }
+            
+            try {
+                $table->dropIndex('users_phone_call_index');
+            } catch (\Exception $e) {
+                // L'index n'existe pas, on continue
+            }
         });
 
         Schema::table('subscriptions', function (Blueprint $table) {
-            $table->dropIndex('subscriptions_payment_reference_index');
-            $table->dropIndex('subscriptions_created_at_index');
-            $table->dropIndex('subscriptions_user_id_index');
+            // Vérifier si les index existent avant de les supprimer
+            try {
+                $table->dropIndex('subscriptions_payment_reference_index');
+            } catch (\Exception $e) {
+                // L'index n'existe pas, on continue
+            }
+            
+            try {
+                $table->dropIndex('subscriptions_created_at_index');
+            } catch (\Exception $e) {
+                // L'index n'existe pas, on continue
+            }
+            
+            try {
+                $table->dropIndex('subscriptions_user_id_index');
+            } catch (\Exception $e) {
+                // L'index n'existe pas, on continue
+            }
         });
     }
 };

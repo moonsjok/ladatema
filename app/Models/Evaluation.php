@@ -10,7 +10,7 @@ class Evaluation extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['title', 'description'];
+    protected $fillable = ['evaluatable_type', 'evaluatable_id', 'title', 'description'];
 
     public function evaluatable()
     {

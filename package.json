@@ -12,14 +12,12 @@
         "vite": "^6.0"
     },
     "dependencies": {
-        "@ckeditor/ckeditor5-build-classic": "^44.1.0",
         "autoprefixer": "^10.4.20",
         "bootstrap": "^5.3.3",
         "bootstrap-icons": "^1.11.3",
-        "ckeditor4": "^4.22.1",
         "datatables.net-bs5": "^2.2.0",
         "jquery": "^3.7.1",
-        "summernote": "^0.9.1",
+        "plyr": "^3.8.4",
         "sweetalert2": "^11.15.10"
     }
 }
