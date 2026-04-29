@@ -59,46 +59,115 @@
             document.addEventListener("DOMContentLoaded", function() {
                 const userAgent = navigator.userAgent.toLowerCase();
                 
-                // Détection améliorée des navigateurs
+                // Détection améliorée et plus précise des navigateurs
                 const isChrome = /chrome/.test(userAgent) && !/edge|opr|brave|firefox|safari/.test(userAgent);
                 const isFirefox = /firefox/.test(userAgent) && !/seamonkey/.test(userAgent);
-                const isEdge = /edg/.test(userAgent);
+                const isEdge = /edg/.test(userAgent) || /edge/.test(userAgent);
                 const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
                 const isOpera = /opera/.test(userAgent) || /opr/.test(userAgent);
                 const isBrave = /brave/.test(userAgent);
+                const isVivaldi = /vivaldi/.test(userAgent);
+                const isTor = /tor/.test(userAgent);
+                const isIE = /msie/.test(userAgent) || /trident/.test(userAgent);
+                const isSeamonkey = /seamonkey/.test(userAgent);
+                const isChromium = /chromium/.test(userAgent);
                 
-                // Vérifier si c'est un navigateur moderne
-                const isModernBrowser = isChrome || isFirefox || isEdge || (isSafari && /version\/([0-9]+)/.test(userAgent) && parseInt(/version\/([0-9]+)/.exec(userAgent)[1]) >= 14);
+                // Détection mobile
+                const isMobile = /mobile|android|iphone|ipad|phone/.test(userAgent);
                 
-                // Informations de débogage
-                console.log('Détection navigateur:', {
+                // Extraire les versions
+                let browserVersion = 'Inconnue';
+                let browserName = 'Navigateur inconnu';
+                
+                if (isChrome) {
+                    browserName = 'Google Chrome';
+                    const chromeMatch = userAgent.match(/chrome\/([0-9.]+)/);
+                    browserVersion = chromeMatch ? chromeMatch[1] : 'Inconnue';
+                } else if (isFirefox) {
+                    browserName = 'Mozilla Firefox';
+                    const firefoxMatch = userAgent.match(/firefox\/([0-9.]+)/);
+                    browserVersion = firefoxMatch ? firefoxMatch[1] : 'Inconnue';
+                } else if (isEdge) {
+                    browserName = 'Microsoft Edge';
+                    const edgeMatch = userAgent.match(/edg\/([0-9.]+)/) || userAgent.match(/edge\/([0-9.]+)/);
+                    browserVersion = edgeMatch ? edgeMatch[1] : 'Inconnue';
+                } else if (isSafari) {
+                    browserName = 'Safari';
+                    const safariMatch = userAgent.match(/version\/([0-9.]+)/);
+                    browserVersion = safariMatch ? safariMatch[1] : 'Inconnue';
+                } else if (isOpera) {
+                    browserName = 'Opera';
+                    const operaMatch = userAgent.match(/opera\/([0-9.]+)/) || userAgent.match(/opr\/([0-9.]+)/);
+                    browserVersion = operaMatch ? operaMatch[1] : 'Inconnue';
+                } else if (isBrave) {
+                    browserName = 'Brave';
+                    const braveMatch = userAgent.match(/chrome\/([0-9.]+)/); // Brave utilise Chrome
+                    browserVersion = braveMatch ? braveMatch[1] : 'Inconnue';
+                } else if (isVivaldi) {
+                    browserName = 'Vivaldi';
+                    const vivaldiMatch = userAgent.match(/vivaldi\/([0-9.]+)/);
+                    browserVersion = vivaldiMatch ? vivaldiMatch[1] : 'Inconnue';
+                } else if (isTor) {
+                    browserName = 'Tor Browser';
+                    browserVersion = 'Basé sur Firefox';
+                } else if (isIE) {
+                    browserName = 'Internet Explorer';
+                    const ieMatch = userAgent.match(/msie ([0-9.]+)/) || userAgent.match(/rv:([0-9.]+)/);
+                    browserVersion = ieMatch ? ieMatch[1] : 'Inconnue';
+                } else if (isChromium) {
+                    browserName = 'Chromium';
+                    const chromiumMatch = userAgent.match(/chromium\/([0-9.]+)/);
+                    browserVersion = chromiumMatch ? chromiumMatch[1] : 'Inconnue';
+                }
+                
+                // Vérifier si on doit recommander Chrome (uniquement si Chrome n'est pas déjà utilisé)
+                const shouldRecommendChrome = !isChrome;
+                
+                // Informations de débogage améliorées
+                console.log('Détection navigateur améliorée:', {
                     userAgent: userAgent,
+                    browserName: browserName,
+                    browserVersion: browserVersion,
+                    isMobile: isMobile,
                     isChrome: isChrome,
                     isFirefox: isFirefox,
                     isEdge: isEdge,
                     isSafari: isSafari,
                     isOpera: isOpera,
                     isBrave: isBrave,
-                    isModernBrowser: isModernBrowser
+                    isVivaldi: isVivaldi,
+                    isTor: isTor,
+                    isIE: isIE,
+                    isChromium: isChromium,
+                    shouldRecommendChrome: shouldRecommendChrome
                 });
 
-                if (!isModernBrowser) {
-                    // 👉 Affiche le bandeau pour navigateurs non supportés
-                    const browserName = isFirefox ? 'Firefox' : 
-                                     isEdge ? 'Edge' : 
-                                     isSafari ? 'Safari' : 
-                                     isOpera ? 'Opera' : 
-                                     isBrave ? 'Brave' : 'Navigateur inconnu';
-                    
+                // Afficher une alerte SEULEMENT si ce n'est pas Chrome
+                if (shouldRecommendChrome) {
+                    // Affiche le bandeau pour navigateurs non Chrome
                     document.getElementById('browser-banner').style.display = 'block';
                     
-                    // 👉 Recommande Google Chrome SEULEMENT si Chrome n'est pas déjà utilisé
+                    // Message personnalisé selon le navigateur
+                    let recommendationMessage = `Pour une meilleure expérience, nous vous recommandons d'utiliser <b>Google Chrome</b>.<br><br>
+                                                   Votre navigateur actuel : <b>${browserName} ${browserVersion}</b>`;
+                    
+                    // Messages spécifiques pour certains navigateurs
+                    if (isIE) {
+                        recommendationMessage = `<b>Internet Explorer n'est plus supporté</b> et présente des risques de sécurité.<br><br>
+                                               Pour votre sécurité et une meilleure expérience, veuillez utiliser <b>Google Chrome</b>.<br><br>
+                                               Votre navigateur : <b>${browserName} ${browserVersion}</b>`;
+                    } else if (isSafari && parseFloat(browserVersion) < 14) {
+                        recommendationMessage = `Votre version de Safari est trop ancienne.<br><br>
+                                               Pour une meilleure expérience, veuillez mettre à jour Safari ou utiliser <b>Google Chrome</b>.<br><br>
+                                               Votre navigateur : <b>${browserName} ${browserVersion}</b>`;
+                    }
+                    
+                    // Affiche SweetAlert SEULEMENT si Chrome n'est pas déjà utilisé et pas déjà dismissé
                     if (!localStorage.getItem('browserWarningDismissed')) {
                         Swal.fire({
-                            icon: 'warning',
-                            title: 'Compatibilité navigateur',
-                            html: `Pour une meilleure expérience, nous vous recommandons d'utiliser <b>Google Chrome</b>.<br><br>
-                                   Votre navigateur actuel : <b>${browserName}</b><br><br>
+                            icon: isIE ? 'error' : 'warning',
+                            title: isIE ? 'Navigateur obsolète' : 'Compatibilité navigateur',
+                            html: `${recommendationMessage}<br><br>
                                    <a href="https://www.google.com/chrome/" target="_blank" class="btn btn-primary btn-sm me-2">
                                        <i class="bi bi-google"></i> Télécharger Chrome
                                    </a>`,
@@ -114,16 +183,12 @@
                         });
                     }
                 } else {
-                    // ✅ Navigateur moderne détecté - aucune alerte nécessaire
+                    // Chrome détecté - aucune alerte nécessaire
                     localStorage.removeItem('browserWarningDismissed');
-                    console.log('✅ Navigateur moderne détecté:', {
-                        browser: isChrome ? 'Chrome' : 
-                               isFirefox ? 'Firefox' : 
-                               isEdge ? 'Edge' : 
-                               isSafari ? 'Safari' : 
-                               isOpera ? 'Opera' : 
-                               isBrave ? 'Brave' : 'Autre',
-                        version: isChrome ? navigator.userAgent.match(/Chrome\/([0-9.]+)/)?.[1] : 'N/A'
+                    console.log('Google Chrome détecté - aucune alerte nécessaire:', {
+                        browser: browserName,
+                        version: browserVersion,
+                        mobile: isMobile ? 'Oui' : 'Non'
                     });
                 }
             });

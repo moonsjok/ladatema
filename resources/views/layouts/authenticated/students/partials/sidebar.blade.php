@@ -17,8 +17,8 @@
 
     <!-- Évaluations -->
     <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('evaluations.*') ? 'active-link' : '' }} toggle-menu"
-            href="{{ route('evaluations.index') }}">
+        <a class="nav-link {{ request()->routeIs('student.evaluations.*') ? 'active-link' : '' }} toggle-menu"
+            href="{{ route('student.evaluations.index') }}">
             <i class="bi bi-check-circle"></i> Évaluations
         </a>
     </li>

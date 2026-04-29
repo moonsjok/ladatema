@@ -643,4 +643,297 @@ class SubscriptionController extends Controller
             return redirect()->back()->with('error', "Une erreur est survenue lors de l'envoi de l'email : " . $e->getMessage());
         }
     }
+
+    /**
+     * Afficher la liste des souscriptions pour l'admin
+     */
+    public function index()
+    {
+               
+        $subscriptions = Subscription::with(['user', 'formation', 'course', 'chapter'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return view('authenticated.owners.subscriptions.index', compact('subscriptions'));
+    }
+
+    /**
+     * Afficher le formulaire de création de souscription
+     */
+    public function create()
+    {
+        $users = User::where('role', 'student')->get();
+        $formations = Formation::all();
+        $courses = Course::all();
+        $chapters = Chapter::all();
+
+        return view('authenticated.owners.subscriptions.create', compact('users', 'formations', 'courses', 'chapters'));
+    }
+
+    /**
+     * Enregistrer une nouvelle souscription
+     */
+    public function storeSubscription(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'type' => 'required|in:formation,course,chapter',
+            'formation_id' => 'nullable|required_if:type,formation|exists:formations,id',
+            'course_id' => 'nullable|required_if:type,course|exists:courses,id',
+            'chapter_id' => 'nullable|required_if:type,chapter|exists:chapters,id',
+            'price' => 'required|integer|min:0',
+            'duration_in_days' => 'required|integer|min:1',
+            'payment_reference' => 'nullable|string|max:255',
+            'is_validated' => 'boolean',
+        ]);
+
+        try {
+            $subscription = Subscription::create([
+                'user_id' => $validated['user_id'],
+                'formation_id' => $validated['type'] === 'formation' ? $validated['formation_id'] : null,
+                'course_id' => $validated['type'] === 'course' ? $validated['course_id'] : null,
+                'chapter_id' => $validated['type'] === 'chapter' ? $validated['chapter_id'] : null,
+                'type' => $validated['type'],
+                'price' => $validated['price'],
+                'duration_in_days' => $validated['duration_in_days'],
+                'expires_at' => now()->addDays($validated['duration_in_days']),
+                'payment_reference' => $validated['payment_reference'],
+                'is_validated' => $validated['is_validated'] ?? false,
+            ]);
+
+            return redirect()->route('subscriptions.index')
+                ->with('success', 'Souscription créée avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la création de la souscription: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    /**
+     * Afficher le formulaire de modification de souscription
+     */
+    public function edit(Subscription $subscription)
+    {
+        $users = User::where('role', 'student')->get();
+        $formations = Formation::all();
+        $courses = Course::all();
+        $chapters = Chapter::all();
+
+        return view('authenticated.owners.subscriptions.edit', compact('subscription', 'users', 'formations', 'courses', 'chapters'));
+    }
+
+    /**
+     * Mettre à jour une souscription
+     */
+    public function updateSubscription(Request $request, Subscription $subscription)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'type' => 'required|in:formation,course,chapter',
+            'formation_id' => 'nullable|required_if:type,formation|exists:formations,id',
+            'course_id' => 'nullable|required_if:type,course|exists:courses,id',
+            'chapter_id' => 'nullable|required_if:type,chapter|exists:chapters,id',
+            'price' => 'required|integer|min:0',
+            'duration_in_days' => 'required|integer|min:1',
+            'payment_reference' => 'nullable|string|max:255',
+            'is_validated' => 'boolean',
+        ]);
+
+        try {
+            $subscription->update([
+                'user_id' => $validated['user_id'],
+                'formation_id' => $validated['type'] === 'formation' ? $validated['formation_id'] : null,
+                'course_id' => $validated['type'] === 'course' ? $validated['course_id'] : null,
+                'chapter_id' => $validated['type'] === 'chapter' ? $validated['chapter_id'] : null,
+                'type' => $validated['type'],
+                'price' => $validated['price'],
+                'duration_in_days' => $validated['duration_in_days'],
+                'expires_at' => $subscription->created_at->addDays($validated['duration_in_days']),
+                'payment_reference' => $validated['payment_reference'],
+                'is_validated' => $validated['is_validated'] ?? false,
+            ]);
+
+            return redirect()->route('subscriptions.index')
+                ->with('success', 'Souscription mise à jour avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la mise à jour de la souscription: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    /**
+     * Soft delete d'une souscription
+     */
+    public function destroy(Subscription $subscription)
+    {
+        try {
+            $subscription->delete();
+            return redirect()->route('subscriptions.index')
+                ->with('success', 'Souscription supprimée avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la suppression de la souscription: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Restaurer une souscription supprimée
+     */
+    public function restore($id)
+    {
+        try {
+            $subscription = Subscription::withTrashed()->findOrFail($id);
+            $subscription->restore();
+            return redirect()->route('subscriptions.index')
+                ->with('success', 'Souscription restaurée avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la restauration de la souscription: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Étendre une souscription
+     */
+    public function extend(Request $request, Subscription $subscription)
+    {
+        $validated = $request->validate([
+            'additional_days' => 'required|integer|min:1|max:365',
+        ]);
+
+        try {
+            $subscription->extend($validated['additional_days']);
+            return redirect()->back()
+                ->with('success', "Souscription étendue de {$validated['additional_days']} jours.");
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Erreur lors de l\'extension de la souscription: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Définir une durée par défaut pour toutes les souscriptions
+     */
+    public function bulkUpdateDuration(Request $request)
+    {
+        $validated = $request->validate([
+            'duration_in_days' => 'required|integer|min:1|max:365',
+            'only_without_expiration' => 'boolean',
+        ]);
+
+        try {
+            $query = Subscription::query();
+            
+            // Si coché, ne mettre à jour que les souscriptions sans date d'expiration
+            if ($validated['only_without_expiration']) {
+                $query->whereNull('expires_at');
+            }
+
+            $subscriptions = $query->get();
+            $updatedCount = 0;
+
+            foreach ($subscriptions as $subscription) {
+                $subscription->duration_in_days = $validated['duration_in_days'];
+                $subscription->expires_at = $subscription->created_at->addDays($validated['duration_in_days']);
+                $subscription->save();
+                $updatedCount++;
+            }
+
+            return redirect()->back()
+                ->with('success', "{$updatedCount} souscription(s) mise(s) à jour avec une durée de {$validated['duration_in_days']} jours.");
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la mise à jour groupée: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Rechercher un étudiant par email 
+     */
+    public function searchStudent(Request $request)
+    {
+
+        $search = $request->get('search');
+        
+        if (empty($search)) {
+            return response()->json(['users' => []]);
+        }
+
+        try {
+            // Vérifier les permissions de l'utilisateur connecté
+            $user = auth()->user();
+            
+            // Vérifier si l'utilisateur a les permissions de gérer les souscriptions
+            if (!$user || !$user->hasPermissionTo('manage subscriptions')) {
+                return response()->json(['error' => 'Permission non autorisée'], 403);
+            }
+
+            $users = User::where(function($query) use ($search) {
+                    $query->where('email', 'LIKE', "%{$search}%");
+                })
+                ->with(['souscriptions' => function($query) {
+                    $query->with(['formation', 'course', 'chapter']);
+                }])
+                ->limit(10)
+                ->get();
+
+            return response()->json(['users' => $users]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erreur lors de la recherche'], 500);
+        }
+    }
+
+    /*
+     * Mettre à jour la durée de souscription d'un étudiant spécifique
+     */
+    public function updateStudentSubscriptionDuration(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'subscription_id' => 'required|exists:subscriptions,id',
+            'duration_in_days' => 'required|integer|min:1|max:365',
+        ]);
+
+        try {
+            // Vérifier les permissions de l'utilisateur connecté
+            $authUser = auth()->user();
+            
+            // Vérifier si l'utilisateur a les permissions de gérer les souscriptions
+            if (!$authUser || !$authUser->hasPermissionTo('manage subscriptions')) {
+                return response()->json(['error' => 'Permission non autorisée'], 403);
+            }
+
+            $user = User::findOrFail($validated['user_id']);
+            $subscription = Subscription::findOrFail($validated['subscription_id']);
+
+            // Vérifier que la souscription appartient bien à l'utilisateur
+            if ($subscription->user_id != $user->id) {
+                return response()->json(['error' => 'Cette souscription n\'appartient pas à cet utilisateur'], 400);
+            }
+
+            // Mettre à jour la durée et calculer la nouvelle expiration
+            $subscription->duration_in_days = $validated['duration_in_days'];
+            $subscription->expires_at = $subscription->created_at->addDays($validated['duration_in_days']);
+            $subscription->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Souscription de {$user->name} mise à jour avec {$validated['duration_in_days']} jours",
+                'subscription' => [
+                    'id' => $subscription->id,
+                    'duration_in_days' => $subscription->duration_in_days,
+                    'expires_at' => $subscription->expires_at->format('d/m/Y H:i'),
+                    'content' => $subscription->formation ? $subscription->formation->title : 
+                              ($subscription->course ? $subscription->course->title : 
+                              ($subscription->chapter ? $subscription->chapter->title : 'N/A'))
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erreur lors de la mise à jour: ' . $e->getMessage()], 500);
+        }
+    }
+
+    
 }

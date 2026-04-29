@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'auth0-session' => [
+            'driver' => 'session',
+            'provider' => 'auth0',
+        ],
     ],
 
     /*
@@ -64,9 +68,9 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
-        'auth0-session' => [
-            'driver' => 'session', // Utilise le driver 'session' au lieu de 'auth0'
-            'provider' => 'auth0',
+        'auth0' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
         // 'users' => [

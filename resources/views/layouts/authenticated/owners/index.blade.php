@@ -68,6 +68,9 @@
                                         @yield('page-title')
                                     </div>
                                     <div class="col-2 d-flex justify-content-end align-items-stretch p-0">
+                                        <a class="nav-item nav-link me-2 " href="{{ route('artisan-clear-cache') }}" title="Clear app cache">
+                                            <i class="bi bi-box"></i>
+                                        </a>
                                         <a class=" text-danger fw-bold mb-3 " href="{{ route('logout') }}"
                                             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                             <i class="bi bi-box-arrow-right"></i>
@@ -119,6 +122,7 @@
         <i>Developpé par Moon's Jok Corp - <a href="https://moonsjokcorp.com" class="">Visitez notre site</a>
     </footer>
     @include('layouts.partials._swal_alert_messages')
+    @include('layouts.partials.whatsapp-contact')
 
 </body>
 

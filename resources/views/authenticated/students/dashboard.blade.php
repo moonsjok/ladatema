@@ -101,10 +101,20 @@
             </div>
 
             <div class="col-md-4 bg-light min-vh-100 d-flex flex-column p-3">
-                <p class="w-100 d-flex justify-content-between align-items-center">
+            <div class="card">
+            <div class="card-header">
+            <p class="w-100 d-flex justify-content-between align-items-center pt-3 pb-3">
                     <strong>Dernières réalisations</strong>
                     <a href="#" class="text-end">Afficher tout</a>
                 </p>
+            </div>
+            <div class="card-body  min-vh-100">
+            <pre>
+              Log des actives du student
+            
+            </pre>
+            </div>
+            </div>
             </div>
         </div>
     </div>

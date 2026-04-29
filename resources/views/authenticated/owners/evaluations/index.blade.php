@@ -1,12 +1,12 @@
 <!-- resources/views/evaluations/index.blade.php -->
 @extends('layouts.authenticated.owners.index')
-@section('page-title', 'évaluations ')
+@section('page-title', 'Évaluations ')
 @section('dashboard-content')
     <div class="container">
 
-        <!-- Bouton Ajouter un chapitre -->
-        <a href="{{ route('evaluations.create') }}" class="btn btn-primary mb-3">
-            <i class="bi bi-plus-circle"></i> Ajouter une evaluation
+        <!-- Bouton Ajouter une évaluation -->
+        <a href="{{ route('evaluations.create.step1') }}" class="btn btn-primary mb-3">
+            <i class="bi bi-plus-circle"></i> Ajouter une évaluation
         </a>
         <h1 class="mb-4">Liste des évaluations</h1>
 
@@ -45,31 +45,37 @@
                                 <th>#</th>
                                 <th>Nom de la formation</th>
                                 <th>Titre de l'évaluation</th>
+                                <th>Importance</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($formationEvaluations as $evaluation)
+                            @foreach ($formationEvaluations as $key => $evaluation)
                                 <tr>
-                                    <td>{{ $evaluation->id }}</td>
+                                    <td> {{ $key + 1 }} {{-- $evaluation->id --}}</td>
                                     <td>{{ $evaluation->evaluatable->title }}</td>
                                     <td>{{ $evaluation->title }}</td>
                                     <td>
+                                        <span class="badge bg-{{ $evaluation->importance_color }}">
+                                            {{ $evaluation->importance_label }}
+                                        </span>
+                                    </td>
+                                    <td>
                                         <a href="{{ route('evaluations.show', $evaluation->id) }}"
-                                            class="btn btn-info btn-sm">
-                                            <i class="bi bi-eye"></i> Voir
+                                            class="btn btn-info btn-sm" title="Voir">
+                                            <i class="bi bi-eye"></i> 
                                         </a>
-                                        <a href="{{ route('evaluations.edit', $evaluation->id) }}"
-                                            class="btn btn-warning btn-sm">
-                                            <i class="bi bi-pencil"></i> Modifier
+                                        <a href="{{ route('evaluations.edit.step1', $evaluation->id) }}"
+                                            class="btn btn-warning btn-sm"  title="Modifier">
+                                            <i class="bi bi-pencil"></i> 
                                         </a>
                                         <form action="{{ route('evaluations.destroy', $evaluation->id) }}" method="POST"
                                             style="display:inline;">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-sm"
-                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette évaluation ?');">
-                                                <i class="bi bi-trash"></i> Supprimer
+                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette évaluation ?');" title="Supprimer" >
+                                                <i class="bi bi-trash"></i> 
                                             </button>
                                         </form>
                                     </td>
@@ -91,31 +97,37 @@
                                 <th>#</th>
                                 <th>Nom du cours</th>
                                 <th>Titre de l'évaluation</th>
+                                <th>Importance</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($courseEvaluations as $evaluation)
+                            @foreach ($courseEvaluations as $key => $evaluation)
                                 <tr>
-                                    <td>{{ $evaluation->id }}</td>
+                                    <td> {{ $key + 1 }} {{-- $evaluation->id --}}</td>
                                     <td>{{ $evaluation->evaluatable->title }}</td>
                                     <td>{{ $evaluation->title }}</td>
                                     <td>
+                                        <span class="badge bg-{{ $evaluation->importance_color }}">
+                                            {{ $evaluation->importance_label }}
+                                        </span>
+                                    </td>
+                                    <td>
                                         <a href="{{ route('evaluations.show', $evaluation->id) }}"
-                                            class="btn btn-info btn-sm">
-                                            <i class="bi bi-eye"></i> Voir
+                                            class="btn btn-info btn-sm" title="Voir">
+                                            <i class="bi bi-eye"></i> 
                                         </a>
-                                        <a href="{{ route('evaluations.edit', $evaluation->id) }}"
-                                            class="btn btn-warning btn-sm">
-                                            <i class="bi bi-pencil"></i> Modifier
+                                        <a href="{{ route('evaluations.edit.step1', $evaluation->id) }}"
+                                            class="btn btn-warning btn-sm" title="Modifier">
+                                            <i class="bi bi-pencil"></i> 
                                         </a>
                                         <form action="{{ route('evaluations.destroy', $evaluation->id) }}" method="POST"
                                             style="display:inline;">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-sm"
-                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette évaluation ?');">
-                                                <i class="bi bi-trash"></i> Supprimer
+                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette évaluation ?');" title="Supprimer">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     </td>
@@ -137,30 +149,36 @@
                                 <th>#</th>
                                 <th>Nom du chapitre</th>
                                 <th>Titre de l'évaluation</th>
+                                <th>Importance</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($chapterEvaluations as $evaluation)
+                            @foreach ($chapterEvaluations as $key => $evaluation)
                                 <tr>
-                                    <td>{{ $evaluation->id }}</td>
+                                    <td> {{ $key + 1 }} {{-- $evaluation->id --}}</td>
                                     <td>{{ $evaluation->evaluatable->title }}</td>
                                     <td>{{ $evaluation->title }}</td>
                                     <td>
+                                        <span class="badge bg-{{ $evaluation->importance_color }}">
+                                            {{ $evaluation->importance_label }}
+                                        </span>
+                                    </td>
+                                    <td>
                                         <a href="{{ route('evaluations.show', $evaluation->id) }}"
-                                            class="btn btn-info btn-sm">
-                                            <i class="bi bi-eye"></i> Voir
+                                            class="btn btn-info btn-sm" title="Voir">
+                                            <i class="bi bi-eye"></i> 
                                         </a>
-                                        <a href="{{ route('evaluations.edit', $evaluation->id) }}"
-                                            class="btn btn-warning btn-sm">
-                                            <i class="bi bi-pencil"></i> Modifier
+                                        <a href="{{ route('evaluations.edit.step1', $evaluation->id) }}"
+                                            class="btn btn-warning btn-sm" title="Modifier">
+                                            <i class="bi bi-pencil"></i> 
                                         </a>
                                         <form action="{{ route('evaluations.destroy', $evaluation->id) }}" method="POST"
                                             style="display:inline;">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-sm"
-                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette évaluation ?');">
+                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette évaluation ?');" title="Supprimer">
                                                 <i class="bi bi-trash"></i> Supprimer
                                             </button>
                                         </form>

@@ -22,6 +22,10 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\AnswerController;
+use App\Http\Controllers\StudentEvaluationController;
+use App\Http\Controllers\AttemptController;
+
+
 use App\Http\Middleware\CheckRole;
 use App\Http\Controllers\Auth\VerificationController;
 
@@ -29,6 +33,17 @@ use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\PartnerController;
 
 // ✅ Routes publiques (accessibles sans authentification)
+
+Route::get('artisan-clear-cache', function () {
+    Artisan::call('config:cache');
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+    Artisan::call('clear-compiled');
+    return redirect()->back()->with('Cache cleared successfuly');
+})->name('artisan-clear-cache');
+
 Route::get('/sitemap.xml', [SitemapController::class, 'generate'])->name('sitemap');
 
 Route::get('/', [UnsecureController::class, 'index'])->name("welcome");
@@ -176,11 +191,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return $output;
     })->name('test.collections');
 
+    // ✅ Gestion des évaluations pour étudiants
+    Route::prefix('student/evaluations')->name('student.evaluations.')->group(function () {
+        Route::get('/', [StudentEvaluationController::class, 'index'])->name('index');
+        Route::get('/{evaluation}', [StudentEvaluationController::class, 'show'])->name('show');
+        Route::get('/{evaluation}/start', [StudentEvaluationController::class, 'start'])->name('start');
+        Route::post('/{evaluation}/submit', [StudentEvaluationController::class, 'submit'])->name('submit');
+        Route::get('/{evaluation}/results/{attempt}', [StudentEvaluationController::class, 'results'])->name('results');
+    });
+
     // 🔒 Routes réservées aux rôles "dev" et "owner"
     Route::middleware([CheckRole::class . ':dev,owner'])->group(function () {
 
 
         Route::resource('partners', PartnerController::class);
+
+        // ✅ Gestion des souscriptions (CRUD complet)
+        Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::get('subscriptions/create', [SubscriptionController::class, 'create'])->name('subscriptions.create');
+        Route::post('subscriptions', [SubscriptionController::class, 'storeSubscription'])->name('subscriptions.store');
+        Route::get('subscriptions/{subscription}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');
+        Route::put('subscriptions/{subscription}', [SubscriptionController::class, 'updateSubscription'])->name('subscriptions.update');
+        Route::delete('subscriptions/{subscription}', [SubscriptionController::class, 'destroy'])->name('subscriptions.destroy');
+        Route::post('subscriptions/{subscription}/restore', [SubscriptionController::class, 'restore'])->name('subscriptions.restore');
+        Route::post('subscriptions/{subscription}/extend', [SubscriptionController::class, 'extend'])->name('subscriptions.extend');
+        Route::post('subscriptions/bulk-update-duration', [SubscriptionController::class, 'bulkUpdateDuration'])->name('subscriptions.bulkUpdateDuration');
+        Route::get('subscriptions/search-student', [SubscriptionController::class, 'searchStudent'])->name('subscriptions.searchStudent');
+        Route::post('subscriptions/update-student-duration', [SubscriptionController::class, 'updateStudentSubscriptionDuration'])->name('subscriptions.updateStudentDuration');
 
 
         Route::resource('categories', CategoryController::class);
@@ -214,11 +251,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // ✅ Gestion des évaluations et questions/réponses
         Route::resource('evaluations', EvaluationController::class);
+        
+        // Processus de création d'évaluation par étapes
+        Route::get('evaluations/create/step-1', [EvaluationController::class, 'createStep1'])->name('evaluations.create.step1');
+        Route::post('evaluations/create/step-1', [EvaluationController::class, 'storeStep1'])->name('evaluations.store.step1');
+        Route::get('evaluations/create/step-2', [EvaluationController::class, 'createStep2'])->name('evaluations.create.step2');
+        Route::post('evaluations/create/step-2', [EvaluationController::class, 'storeStep2'])->name('evaluations.store.step2');
+        Route::get('evaluations/create/step-3', [EvaluationController::class, 'createStep3'])->name('evaluations.create.step3');
+        Route::post('evaluations/create/step-3', [EvaluationController::class, 'storeStep3'])->name('evaluations.store.step3');
+        
+        // Processus d'édition d'évaluation par étapes
+        Route::get('evaluations/{evaluation}/edit/step-1', [EvaluationController::class, 'editStep1'])->name('evaluations.edit.step1');
+        Route::put('evaluations/{evaluation}/edit/step-1', [EvaluationController::class, 'updateStep1'])->name('evaluations.update.step1');
+        Route::get('evaluations/{evaluation}/edit/step-2', [EvaluationController::class, 'editStep2'])->name('evaluations.edit.step2');
+        Route::put('evaluations/{evaluation}/edit/step-2', [EvaluationController::class, 'updateStep2'])->name('evaluations.update.step2');
+        Route::get('evaluations/{evaluation}/edit/step-3', [EvaluationController::class, 'editStep3'])->name('evaluations.edit.step3');
+        Route::put('evaluations/{evaluation}/edit/step-3', [EvaluationController::class, 'updateStep3'])->name('evaluations.update.step3');
         Route::put('evaluations/question/{question}/update', [EvaluationController::class, 'questionUpdate'])->name("evaluation.question.update");
         Route::put('evaluations/answer/{answer}/update', [EvaluationController::class, 'answerUpdate'])->name("evaluation.answer.update");
-
+        
+        
         Route::resource('questions', QuestionController::class);
         Route::resource('answers', AnswerController::class);
+//Gestion des tentatives
+
+Route::resource('attempts', AttemptController::class);
+        
+
+
 
         // ✅ Gestion des vidéos
         Route::get('/videos', [SecureController::class, 'listVideos'])->name('videos.list');

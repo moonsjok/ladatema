@@ -50,9 +50,25 @@
     <!-- Évaluations -->
     <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('evaluations.*') ? 'active-link' : '' }} toggle-menu"
-            href="{{ route('evaluations.index') }}">
+            href="#" data-bs-toggle="collapse" data-bs-target="#evaluationsSubmenu">
             <i class="bi bi-check-circle"></i> Évaluations
         </a>
+        <div class="collapse {{ request()->routeIs('evaluations.*') ? 'show' : '' }}" id="evaluationsSubmenu">
+            <ul class="nav flex-column sub-menu">
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('evaluations.index') ? 'active-link' : '' }}" 
+                       href="{{ route('evaluations.index') }}">
+                        <i class="bi bi-list-ul"></i> Les évaluations
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('attempts.index') ? 'active-link' : '' }}" 
+                       href="{{ route('attempts.index') }}">
+                        <i class="bi bi-envelope-plus"></i> Tentatives
+                    </a>
+                </li>
+            </ul>
+        </div>
     </li>
 
     <!-- Médias -->
@@ -99,8 +115,21 @@
         </a>
     </li>
 
+    <!-- Souscriptions -->
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('subscriptions.*') ? 'active-link' : '' }} toggle-menu"
+            href="{{ route('subscriptions.index') }}">
+            <i class="bi bi-credit-card"></i> Souscriptions
+        </a>
+    </li>
+
     <!-- Bouton de déconnexion -->
     <div class="mt-auto">
+
+        <a class="nav-item nav-link " href="{{ route('artisan-clear-cache') }}">
+            <i class="bi bi-refresh"></i> Clear cache
+        </a>
+    
         <a class="nav-item nav-link logout " href="{{ route('logout') }}"
             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
             <i class="bi bi-box-arrow-right"></i> Déconnexion

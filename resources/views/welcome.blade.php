@@ -32,7 +32,7 @@
                                 <a href="#" class="btn btn-primary btn-lg  mt-3">
                                     <i class="bi bi-briefcase"></i> Nos prestations
                                 </a>
-                                <a href="#" class="btn btn-secondary btn-lg  mt-3">
+                                <a href="{{route('contact.form')}}" class="btn btn-secondary btn-lg  mt-3">
                                     <i class="bi bi-chat-dots"></i> Nous contacter
                                 </a>
                             </p>

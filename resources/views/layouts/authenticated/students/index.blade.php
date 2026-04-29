@@ -114,6 +114,7 @@
         <p>Developpé par Moon's Jok Corp - <a href="https://moonsjokcorp.com" class="">Visitez notre site</a>
     </footer>
     @include('layouts.partials._swal_alert_messages')
+    @include('layouts.partials.whatsapp-contact')
 
 </body>
 

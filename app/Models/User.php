@@ -77,6 +77,14 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     }
 
     /**
+     * Relationship with Attempts.
+     */
+    public function attempts()
+    {
+        return $this->hasMany(Attempt::class);
+    }
+
+    /**
      * Register media collections for User model
      */
     public function registerMediaCollections(): void
