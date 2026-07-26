@@ -44,7 +44,7 @@ class SubscriptionController extends Controller
     public function createAccount(Request $request)
     {
         // Si l'utilisateur n'est pas connecté, afficher le formulaire d'inscription
-    if (!Auth::check()) {
+        if (!Auth::check()) {
             return view('subscriptions.create_account', ['request' => $request]);
         }
 
@@ -329,7 +329,7 @@ class SubscriptionController extends Controller
                         $keyword = "%{$keyword}%";
                         $query->where(function ($q) use ($keyword) {
                             $q->whereRaw("CONCAT(COALESCE(prenoms,''), ' ', COALESCE(nom,'')) LIKE ?", [$keyword])
-                              ->orWhere('name', 'like', $keyword);
+                                ->orWhere('name', 'like', $keyword);
                         });
                     })
                     ->addColumn('contacts', function ($user) {
@@ -353,8 +353,8 @@ class SubscriptionController extends Controller
                         $keyword = "%{$keyword}%";
                         $query->where(function ($q) use ($keyword) {
                             $q->where('email', 'like', $keyword)
-                              ->orWhere('phone_call', 'like', $keyword)
-                              ->orWhere('phone_whatsapp', 'like', $keyword);
+                                ->orWhere('phone_call', 'like', $keyword)
+                                ->orWhere('phone_whatsapp', 'like', $keyword);
                         });
                     })
                     ->rawColumns(['contacts'])
@@ -373,9 +373,9 @@ class SubscriptionController extends Controller
             }
 
             if (request()->query('type') === 'with_subscriptions') {
-            // Return one row per non-deleted subscription whose user is not soft-deleted
-            // Use joins so searching and ordering can work on user fields and formation title
-            $subQuery = Subscription::select(
+                // Return one row per non-deleted subscription whose user is not soft-deleted
+                // Use joins so searching and ordering can work on user fields and formation title
+                $subQuery = Subscription::select(
                     'subscriptions.id',
                     'subscriptions.user_id',
                     'subscriptions.formation_id',
@@ -386,105 +386,105 @@ class SubscriptionController extends Controller
                     'users.nom as user_nom',
                     'users.name as user_name',
                     'users.email as user_email',
-                        'users.phone_call as user_phone_call',
-                        'users.phone_whatsapp as user_phone_whatsapp',
-                        'users.updated_at as user_updated_at',
+                    'users.phone_call as user_phone_call',
+                    'users.phone_whatsapp as user_phone_whatsapp',
+                    'users.updated_at as user_updated_at',
                     'formations.title as formation_title'
                 )
-                ->join('users', 'users.id', '=', 'subscriptions.user_id')
-                ->leftJoin('formations', 'formations.id', '=', 'subscriptions.formation_id')
-                ->whereNull('subscriptions.deleted_at')
-                ->where('users.role', 'student')
-                ->whereNull('users.deleted_at');
+                    ->join('users', 'users.id', '=', 'subscriptions.user_id')
+                    ->leftJoin('formations', 'formations.id', '=', 'subscriptions.formation_id')
+                    ->whereNull('subscriptions.deleted_at')
+                    ->where('users.role', 'student')
+                    ->whereNull('users.deleted_at');
 
-            return DataTables::of($subQuery)
-                        ->addColumn('payment_reference', fn($sub) => $sub->payment_reference)
-                        ->addColumn('student', function ($sub) {
-                            $full = trim((($sub->user_prenoms ?? '') . ' ' . ($sub->user_nom ?? '')));
-                            $name = $full !== '' ? $full : ($sub->user_name ?? '');
+                return DataTables::of($subQuery)
+                    ->addColumn('payment_reference', fn($sub) => $sub->payment_reference)
+                    ->addColumn('student', function ($sub) {
+                        $full = trim((($sub->user_prenoms ?? '') . ' ' . ($sub->user_nom ?? '')));
+                        $name = $full !== '' ? $full : ($sub->user_name ?? '');
 
-                            $lines = [];
-                            // name line
-                            $lines[] = '<div><i class="bi bi-person-badge-fill text-primary me-2"></i><strong>' . e($name) . '</strong></div>';
-                            // contacts (clickable)
-                            if (!empty($sub->user_email)) {
-                                $lines[] = '<div class="small text-muted"><i class="bi bi-envelope-fill text-primary me-1"></i><a href="' . e('mailto:' . $sub->user_email) . '">' . e($sub->user_email) . '</a></div>';
-                            }
-                            if (!empty($sub->user_phone_call)) {
-                                $lines[] = '<div class="small text-muted"><i class="bi bi-telephone-fill text-primary me-1"></i><a href="' . e('tel:' . preg_replace('/\\s+/', '', $sub->user_phone_call)) . '">' . e($sub->user_phone_call) . '</a></div>';
-                            }
-                            if (!empty($sub->user_phone_whatsapp)) {
-                                $digits = preg_replace('/\D+/', '', $sub->user_phone_whatsapp);
-                                $lines[] = '<div class="small text-muted"><i class="bi bi-whatsapp text-success me-1"></i><a href="' . e('https://wa.me/' . $digits) . '" target="_blank" rel="noopener noreferrer">' . e($sub->user_phone_whatsapp) . '</a></div>';
-                            }
+                        $lines = [];
+                        // name line
+                        $lines[] = '<div><i class="bi bi-person-badge-fill text-primary me-2"></i><strong>' . e($name) . '</strong></div>';
+                        // contacts (clickable)
+                        if (!empty($sub->user_email)) {
+                            $lines[] = '<div class="small text-muted"><i class="bi bi-envelope-fill text-primary me-1"></i><a href="' . e('mailto:' . $sub->user_email) . '">' . e($sub->user_email) . '</a></div>';
+                        }
+                        if (!empty($sub->user_phone_call)) {
+                            $lines[] = '<div class="small text-muted"><i class="bi bi-telephone-fill text-primary me-1"></i><a href="' . e('tel:' . preg_replace('/\\s+/', '', $sub->user_phone_call)) . '">' . e($sub->user_phone_call) . '</a></div>';
+                        }
+                        if (!empty($sub->user_phone_whatsapp)) {
+                            $digits = preg_replace('/\D+/', '', $sub->user_phone_whatsapp);
+                            $lines[] = '<div class="small text-muted"><i class="bi bi-whatsapp text-success me-1"></i><a href="' . e('https://wa.me/' . $digits) . '" target="_blank" rel="noopener noreferrer">' . e($sub->user_phone_whatsapp) . '</a></div>';
+                        }
 
-                            // last login (from joined users.updated_at)
-                            if (!empty($sub->user_updated_at)) {
-                                $lines[] = '<div class="mt-1 small text-muted"><i class="bi bi-clock-fill me-1"></i>' . e(optional($sub->user_updated_at)->format('Y-m-d H:i:s')) . '</div>';
-                            }
-                            return implode('', $lines);
-                        })
-                        ->addColumn('formation_title', function ($sub) {
-                            return $sub->formation_title ?? '';
-                        })
-                        ->filterColumn('formation_title', function ($query, $keyword) {
-                            $keyword = "%{$keyword}%";
-                            $query->where('formations.title', 'like', $keyword);
-                        })
-                        ->addColumn('status', function ($sub) {
-                            return $sub->is_validated
-                                ? '<span class="badge bg-success">Validée</span>'
-                                : '<button class="btn btn-warning validate-subscription" data-id="' . $sub->id . '">Valider</button>';
-                        })
-                        ->filterColumn('status', function ($query, $keyword) {
-                            // allow searching by validated/unvalidated text
-                            $keyword = strtolower($keyword);
-                            if (strpos('valid', $keyword) !== false || strpos('validée', $keyword) !== false || strpos('valide', $keyword) !== false) {
-                                $query->where('subscriptions.is_validated', true);
-                            } elseif (strpos('pending', $keyword) !== false || strpos('non', $keyword) !== false || strpos('attente', $keyword) !== false) {
-                                $query->where('subscriptions.is_validated', false);
-                            }
-                        })
-                        ->rawColumns(['student', 'status'])
-                        ->filterColumn('student', function ($query, $keyword) {
-                            $keyword = "%{$keyword}%";
-                            $query->where(function ($q) use ($keyword) {
-                                $q->whereRaw("CONCAT(COALESCE(users.prenoms,''),' ',COALESCE(users.nom,'')) LIKE ?", [$keyword])
-                                  ->orWhere('users.name', 'like', $keyword)
-                                  ->orWhere('users.email', 'like', $keyword)
-                                  ->orWhere('users.phone_call', 'like', $keyword)
-                                  ->orWhere('users.phone_whatsapp', 'like', $keyword);
-                            });
-                        })
-                        ->filterColumn('last_login', function ($query, $keyword) {
-                            // Allow searching date-like strings; convert to wildcard
-                            $like = "%{$keyword}%";
-                            $query->where('users.updated_at', 'like', $like);
-                        })
-                        ->filterColumn('payment_reference', function ($query, $keyword) {
-                            $like = "%{$keyword}%";
-                            $query->where('subscriptions.payment_reference', 'like', $like);
-                        })
-                        ->orderColumn('payment_reference', function ($query, $order) {
-                            $query->orderBy('subscriptions.payment_reference', $order);
-                        })
-                        ->orderColumn('student', function ($query, $order) {
-                            $query->orderBy('users.prenoms', $order)->orderBy('users.nom', $order)->orderBy('users.name', $order);
-                        })
-                        ->orderColumn('formation_title', function ($query, $order) {
-                            $query->orderBy('formations.title', $order);
-                        })
-                        ->orderColumn('status', function ($query, $order) {
-                            // order by is_validated boolean
-                            $query->orderBy('subscriptions.is_validated', $order);
-                        })
-                        ->orderColumn('created_at', function ($query, $order) {
-                            $query->orderBy('created_at', $order);
-                        })
-                        ->orderColumn('last_login', function ($query, $order) {
-                            $query->orderBy('users.updated_at', $order);
-                        })
-                        ->make(true);
+                        // last login (from joined users.updated_at)
+                        if (!empty($sub->user_updated_at)) {
+                            $lines[] = '<div class="mt-1 small text-muted"><i class="bi bi-clock-fill me-1"></i>' . e(optional($sub->user_updated_at)->format('Y-m-d H:i:s')) . '</div>';
+                        }
+                        return implode('', $lines);
+                    })
+                    ->addColumn('formation_title', function ($sub) {
+                        return $sub->formation_title ?? '';
+                    })
+                    ->filterColumn('formation_title', function ($query, $keyword) {
+                        $keyword = "%{$keyword}%";
+                        $query->where('formations.title', 'like', $keyword);
+                    })
+                    ->addColumn('status', function ($sub) {
+                        return $sub->is_validated
+                            ? '<span class="badge bg-success">Validée</span>'
+                            : '<button class="btn btn-warning validate-subscription" data-id="' . $sub->id . '">Valider</button>';
+                    })
+                    ->filterColumn('status', function ($query, $keyword) {
+                        // allow searching by validated/unvalidated text
+                        $keyword = strtolower($keyword);
+                        if (strpos('valid', $keyword) !== false || strpos('validée', $keyword) !== false || strpos('valide', $keyword) !== false) {
+                            $query->where('subscriptions.is_validated', true);
+                        } elseif (strpos('pending', $keyword) !== false || strpos('non', $keyword) !== false || strpos('attente', $keyword) !== false) {
+                            $query->where('subscriptions.is_validated', false);
+                        }
+                    })
+                    ->rawColumns(['student', 'status'])
+                    ->filterColumn('student', function ($query, $keyword) {
+                        $keyword = "%{$keyword}%";
+                        $query->where(function ($q) use ($keyword) {
+                            $q->whereRaw("CONCAT(COALESCE(users.prenoms,''),' ',COALESCE(users.nom,'')) LIKE ?", [$keyword])
+                                ->orWhere('users.name', 'like', $keyword)
+                                ->orWhere('users.email', 'like', $keyword)
+                                ->orWhere('users.phone_call', 'like', $keyword)
+                                ->orWhere('users.phone_whatsapp', 'like', $keyword);
+                        });
+                    })
+                    ->filterColumn('last_login', function ($query, $keyword) {
+                        // Allow searching date-like strings; convert to wildcard
+                        $like = "%{$keyword}%";
+                        $query->where('users.updated_at', 'like', $like);
+                    })
+                    ->filterColumn('payment_reference', function ($query, $keyword) {
+                        $like = "%{$keyword}%";
+                        $query->where('subscriptions.payment_reference', 'like', $like);
+                    })
+                    ->orderColumn('payment_reference', function ($query, $order) {
+                        $query->orderBy('subscriptions.payment_reference', $order);
+                    })
+                    ->orderColumn('student', function ($query, $order) {
+                        $query->orderBy('users.prenoms', $order)->orderBy('users.nom', $order)->orderBy('users.name', $order);
+                    })
+                    ->orderColumn('formation_title', function ($query, $order) {
+                        $query->orderBy('formations.title', $order);
+                    })
+                    ->orderColumn('status', function ($query, $order) {
+                        // order by is_validated boolean
+                        $query->orderBy('subscriptions.is_validated', $order);
+                    })
+                    ->orderColumn('created_at', function ($query, $order) {
+                        $query->orderBy('created_at', $order);
+                    })
+                    ->orderColumn('last_login', function ($query, $order) {
+                        $query->orderBy('users.updated_at', $order);
+                    })
+                    ->make(true);
             }
         }
 
@@ -649,7 +649,7 @@ class SubscriptionController extends Controller
      */
     public function index()
     {
-               
+
         $subscriptions = Subscription::with(['user', 'formation', 'course', 'chapter'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -682,7 +682,7 @@ class SubscriptionController extends Controller
             'course_id' => 'nullable|required_if:type,course|exists:courses,id',
             'chapter_id' => 'nullable|required_if:type,chapter|exists:chapters,id',
             'price' => 'required|integer|min:0',
-            'duration_in_days' => 'required|integer|min:1',
+            'duration_in_days' => 'nullable|integer|min:1|max:365',
             'payment_reference' => 'nullable|string|max:255',
             'is_validated' => 'boolean',
         ]);
@@ -695,8 +695,8 @@ class SubscriptionController extends Controller
                 'chapter_id' => $validated['type'] === 'chapter' ? $validated['chapter_id'] : null,
                 'type' => $validated['type'],
                 'price' => $validated['price'],
-                'duration_in_days' => $validated['duration_in_days'],
-                'expires_at' => now()->addDays($validated['duration_in_days']),
+                'duration_in_days' => $validated['duration_in_days'] ?? null,
+                'expires_at' => isset($validated['duration_in_days']) ? now()->addDays((int)$validated['duration_in_days']) : null,
                 'payment_reference' => $validated['payment_reference'],
                 'is_validated' => $validated['is_validated'] ?? false,
             ]);
@@ -735,7 +735,7 @@ class SubscriptionController extends Controller
             'course_id' => 'nullable|required_if:type,course|exists:courses,id',
             'chapter_id' => 'nullable|required_if:type,chapter|exists:chapters,id',
             'price' => 'required|integer|min:0',
-            'duration_in_days' => 'required|integer|min:1',
+            'duration_in_days' => 'nullable|integer|min:1|max:365',
             'payment_reference' => 'nullable|string|max:255',
             'is_validated' => 'boolean',
         ]);
@@ -749,7 +749,7 @@ class SubscriptionController extends Controller
                 'type' => $validated['type'],
                 'price' => $validated['price'],
                 'duration_in_days' => $validated['duration_in_days'],
-                'expires_at' => $subscription->created_at->addDays($validated['duration_in_days']),
+                'expires_at' => $subscription->created_at->addDays((int)$validated['duration_in_days']),
                 'payment_reference' => $validated['payment_reference'],
                 'is_validated' => $validated['is_validated'] ?? false,
             ]);
@@ -825,7 +825,7 @@ class SubscriptionController extends Controller
 
         try {
             $query = Subscription::query();
-            
+
             // Si coché, ne mettre à jour que les souscriptions sans date d'expiration
             if ($validated['only_without_expiration']) {
                 $query->whereNull('expires_at');
@@ -835,8 +835,8 @@ class SubscriptionController extends Controller
             $updatedCount = 0;
 
             foreach ($subscriptions as $subscription) {
-                $subscription->duration_in_days = $validated['duration_in_days'];
-                $subscription->expires_at = $subscription->created_at->addDays($validated['duration_in_days']);
+                $subscription->duration_in_days = (int)$validated['duration_in_days'];
+                $subscription->expires_at = $subscription->created_at->addDays((int)$validated['duration_in_days']);
                 $subscription->save();
                 $updatedCount++;
             }
@@ -856,7 +856,7 @@ class SubscriptionController extends Controller
     {
 
         $search = $request->get('search');
-        
+
         if (empty($search)) {
             return response()->json(['users' => []]);
         }
@@ -864,20 +864,27 @@ class SubscriptionController extends Controller
         try {
             // Vérifier les permissions de l'utilisateur connecté
             $user = auth()->user();
-            
+
             // Vérifier si l'utilisateur a les permissions de gérer les souscriptions
             if (!$user || !$user->hasPermissionTo('manage subscriptions')) {
                 return response()->json(['error' => 'Permission non autorisée'], 403);
             }
 
-            $users = User::where(function($query) use ($search) {
+            $users = User::where('role', 'student')
+                ->where(function ($query) use ($search) {
                     $query->where('email', 'LIKE', "%{$search}%");
                 })
-                ->with(['souscriptions' => function($query) {
+                ->with(['souscriptions' => function ($query) {
                     $query->with(['formation', 'course', 'chapter']);
                 }])
                 ->limit(10)
                 ->get();
+
+            // Debug pour voir les résultats
+            \Log::info('Recherche étudiant: ' . $search, [
+                'results_count' => $users->count(),
+                'users' => $users->pluck('email')->toArray()
+            ]);
 
             return response()->json(['users' => $users]);
         } catch (\Exception $e) {
@@ -899,7 +906,7 @@ class SubscriptionController extends Controller
         try {
             // Vérifier les permissions de l'utilisateur connecté
             $authUser = auth()->user();
-            
+
             // Vérifier si l'utilisateur a les permissions de gérer les souscriptions
             if (!$authUser || !$authUser->hasPermissionTo('manage subscriptions')) {
                 return response()->json(['error' => 'Permission non autorisée'], 403);
@@ -914,8 +921,9 @@ class SubscriptionController extends Controller
             }
 
             // Mettre à jour la durée et calculer la nouvelle expiration
-            $subscription->duration_in_days = $validated['duration_in_days'];
-            $subscription->expires_at = $subscription->created_at->addDays($validated['duration_in_days']);
+            $subscription->duration_in_days = (int)$validated['duration_in_days'];
+            // Utiliser une copie de created_at pour éviter de la modifier
+            $subscription->expires_at = (clone $subscription->created_at)->addDays((int)$validated['duration_in_days']);
             $subscription->save();
 
             return response()->json([
@@ -925,15 +933,11 @@ class SubscriptionController extends Controller
                     'id' => $subscription->id,
                     'duration_in_days' => $subscription->duration_in_days,
                     'expires_at' => $subscription->expires_at->format('d/m/Y H:i'),
-                    'content' => $subscription->formation ? $subscription->formation->title : 
-                              ($subscription->course ? $subscription->course->title : 
-                              ($subscription->chapter ? $subscription->chapter->title : 'N/A'))
+                    'content' => $subscription->formation ? $subscription->formation->title : ($subscription->course ? $subscription->course->title : ($subscription->chapter ? $subscription->chapter->title : 'N/A'))
                 ]
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Erreur lors de la mise à jour: ' . $e->getMessage()], 500);
         }
     }
-
-    
 }
