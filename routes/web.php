@@ -31,6 +31,7 @@ use App\Http\Controllers\Auth\VerificationController;
 
 
 use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\AppNotificationController;
 
 // ✅ Routes publiques (accessibles sans authentification)
 
@@ -90,7 +91,7 @@ Route::get('/subscriptions/select', [SubscriptionController::class, 'selectType'
 Route::get('/subscriptions/create-account', [SubscriptionController::class, 'createAccount'])->name('subscriptions.createAccount');
 Route::post('/subscriptions/store-account', [SubscriptionController::class, 'storeAccount'])->name('subscriptions.storeAccount');
 Route::get('/subscriptions/confirm', [SubscriptionController::class, 'confirm'])->name('subscriptions.confirm');
-Route::post('/subscriptions/store', [SubscriptionController::class, 'store'])->name('subscriptions.store');
+Route::post('/subscriptions/store', [SubscriptionController::class, 'store'])->name('subscriptions.store.public')->middleware(['auth', 'profile.complete']);
 
 
 
@@ -98,9 +99,10 @@ Route::post('/subscriptions/store', [SubscriptionController::class, 'store'])->n
 // ✅ Paiement (public)
 Route::post('/process/payment', [PaymentController::class, 'processPayment'])->name('payment.process');
 
-// 🔒 Routes protégées (nécessitent une authentification)
-Route::middleware(['auth', 'verified'])->group(function () {
+// 🔒 Routes protégées (nécessitent une authentification, e-mail vérifié et profil complet)
+Route::middleware(['auth', 'profile.complete'])->group(function () {
     Route::get('/dashboard', [SecureController::class, 'dashboard'])->name('dashboard');
+    Route::get('/subscriptions/{subscription}/expired', [SubscriptionController::class, 'showExpired'])->name('subscriptions.expired');
 
     // ✅ Uploads (images et vidéos)
     Route::post('/upload-image', [MediaController::class, 'upload']);
@@ -117,17 +119,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         try {
             $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::findOrFail($mediaId);
-            
+
             // Vérifier si le média est public ou appartient à l'utilisateur
-            if (!$media->getCustomProperty('is_public', false) && 
-                ($media->model_type !== \App\Models\User::class || $media->model_id !== auth()->id())) {
-                
+            if (
+                !$media->getCustomProperty('is_public', false) &&
+                ($media->model_type !== \App\Models\User::class || $media->model_id !== auth()->id())
+            ) {
+
                 return response()->view('errors.media-forbidden', [
                     'message' => 'Ce fichier est privé ou ne vous appartient pas.'
                 ], 403);
             }
 
-            return response()->file($media->getPath());
+            // Utiliser l'URL R2 temporaire qui fonctionne même pour les anciens fichiers
+            $r2Url = $media->getTemporaryUrl(now()->addHours(24));
+
+            // Rediriger vers l'URL R2 temporaire avec protection
+            return redirect()->away($r2Url, 302);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->view('errors.media-not-found', [
                 'message' => 'Le fichier demandé n\'existe pas ou a été supprimé.'
@@ -168,16 +176,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/complete', [ProfileController::class, 'submitForm'])->name('profile.complete.submit');
 
 
+    // ✅ Système de Notifications (Dev & Owner)
+    Route::get('/app-notifications', [AppNotificationController::class, 'index'])->name('app-notifications.index');
+    Route::post('/app-notifications', [AppNotificationController::class, 'store'])->name('app-notifications.store');
+    Route::delete('/app-notifications/{notification}', [AppNotificationController::class, 'destroy'])->name('app-notifications.destroy');
+    Route::post('/app-notifications/{notification}/read', [AppNotificationController::class, 'markAsRead'])->name('app-notifications.read');
+
     // ✅ Consultation de cours (pour tous les utilisateurs connectés)
     Route::get('course/{course}/viewer/{chapterId?}', [CourseController::class, 'courseViewer'])->name('course-viewer');
 
     // ✅ Routes de test pour le débogage
     Route::get('/test-collections', function () {
         if (!auth()->check()) return redirect('/login');
-        
+
         $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::all();
         $collections = $media->groupBy('collection_name');
-        
+
         $output = "<h1>Collections de médias</h1>";
         foreach ($collections as $collection => $items) {
             $output .= "<h2>Collection: $collection (" . $items->count() . " fichiers)</h2>";
@@ -187,7 +201,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
             $output .= "</ul>";
         }
-        
+
         return $output;
     })->name('test.collections');
 
@@ -251,7 +265,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // ✅ Gestion des évaluations et questions/réponses
         Route::resource('evaluations', EvaluationController::class);
-        
+
         // Processus de création d'évaluation par étapes
         Route::get('evaluations/create/step-1', [EvaluationController::class, 'createStep1'])->name('evaluations.create.step1');
         Route::post('evaluations/create/step-1', [EvaluationController::class, 'storeStep1'])->name('evaluations.store.step1');
@@ -259,7 +273,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('evaluations/create/step-2', [EvaluationController::class, 'storeStep2'])->name('evaluations.store.step2');
         Route::get('evaluations/create/step-3', [EvaluationController::class, 'createStep3'])->name('evaluations.create.step3');
         Route::post('evaluations/create/step-3', [EvaluationController::class, 'storeStep3'])->name('evaluations.store.step3');
-        
+
         // Processus d'édition d'évaluation par étapes
         Route::get('evaluations/{evaluation}/edit/step-1', [EvaluationController::class, 'editStep1'])->name('evaluations.edit.step1');
         Route::put('evaluations/{evaluation}/edit/step-1', [EvaluationController::class, 'updateStep1'])->name('evaluations.update.step1');
@@ -267,16 +281,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('evaluations/{evaluation}/edit/step-2', [EvaluationController::class, 'updateStep2'])->name('evaluations.update.step2');
         Route::get('evaluations/{evaluation}/edit/step-3', [EvaluationController::class, 'editStep3'])->name('evaluations.edit.step3');
         Route::put('evaluations/{evaluation}/edit/step-3', [EvaluationController::class, 'updateStep3'])->name('evaluations.update.step3');
+        Route::get('evaluations/question/{question}/edit', [EvaluationController::class, 'editQuestion'])->name("evaluation.question.edit");
         Route::put('evaluations/question/{question}/update', [EvaluationController::class, 'questionUpdate'])->name("evaluation.question.update");
         Route::put('evaluations/answer/{answer}/update', [EvaluationController::class, 'answerUpdate'])->name("evaluation.answer.update");
-        
-        
+
+        // Routes supplémentaires pour la gestion avancée des questions et réponses
+        Route::post('evaluations/question/{question}/duplicate', [EvaluationController::class, 'duplicateQuestion'])->name("evaluation.question.duplicate");
+        Route::delete('evaluations/question/{question}/delete', [EvaluationController::class, 'deleteQuestion'])->name("evaluation.question.delete");
+        Route::post('evaluations/answer/{answer}/toggle-correct', [EvaluationController::class, 'toggleCorrectAnswer'])->name("evaluation.answer.toggle-correct");
+        Route::delete('evaluations/answer/{answer}/delete', [EvaluationController::class, 'deleteAnswer'])->name("evaluation.answer.delete");
+        Route::post('evaluations/answer/{answer}/update-text', [EvaluationController::class, 'updateAnswerText'])->name("evaluation.answer.update-text");
+        Route::post('evaluations/answer/{answer}/update-correct', [EvaluationController::class, 'updateAnswerCorrect'])->name("evaluation.answer.update-correct");
+        Route::post('evaluations/answer/{answer}/update-explanation', [EvaluationController::class, 'updateAnswerExplanation'])->name("evaluation.answer.update-explanation");
+        Route::post('evaluations/question/{question}/add-answer', [EvaluationController::class, 'addAnswerToQuestion'])->name("evaluation.question.add-answer");
+        Route::post('evaluations/question/{question}/reset-answers', [EvaluationController::class, 'resetQuestionAnswers'])->name("evaluation.question.reset-answers");
+
+
         Route::resource('questions', QuestionController::class);
         Route::resource('answers', AnswerController::class);
-//Gestion des tentatives
+        //Gestion des tentatives
 
-Route::resource('attempts', AttemptController::class);
-        
+        Route::resource('attempts', AttemptController::class);
+
 
 
 

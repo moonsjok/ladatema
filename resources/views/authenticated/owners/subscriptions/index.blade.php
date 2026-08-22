@@ -75,16 +75,34 @@
                                         @endif
                                     </td>
                                     <td>{{ number_format($subscription->price) }} FCFA</td>
-                                    <td>{{ $subscription->duration_in_days }} jours</td>
+                                    <td>
+                                    
+                                    {{ $subscription->duration_in_days }} jours
+                                    
+                                    </td>
                                     <td>
                                         @if($subscription->expires_at)
-                                            <div>
-                                                {{ $subscription->expires_at->format('d/m/Y H:i') }}
-                                                <br>
-                                                <small class="text-muted">
-                                                    {{ $subscription->days_remaining }} jours restants
-                                                </small>
-                                            </div>
+                                            @if(is_string($subscription->expires_at))
+                                                @php
+                                                    $expiresAt = \Carbon\Carbon::parse($subscription->expires_at);
+                                                @endphp
+                                                
+                                                <div>
+                                                    {{ $expiresAt->format('d/m/Y H:i') }}
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        {{ $subscription->days_remaining }}  restants
+                                                    </small>
+                                                </div>
+                                            @else
+                                                <div>
+                                                    {{ $subscription->expires_at->format('d/m/Y H:i') }}
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        {{ $subscription->days_remaining }}  restants
+                                                    </small>
+                                                </div>
+                                            @endif
                                         @else
                                             <span class="text-muted">Non définie</span>
                                         @endif
@@ -180,7 +198,14 @@
                                     <i class="bi bi-info-circle me-2"></i>
                                     La souscription de {{ $subscription->user->name }} 
                                     @if($subscription->expires_at)
-                                        expire actuellement le {{ $subscription->expires_at->format('d/m/Y') }}
+                                        @if(is_string($subscription->expires_at))
+                                            @php
+                                                $expiresAtModal = \Carbon\Carbon::parse($subscription->expires_at);
+                                            @endphp
+                                            expire actuellement le {{ $expiresAtModal->format('d/m/Y') }}
+                                        @else
+                                            expire actuellement le {{ $subscription->expires_at->format('d/m/Y') }}
+                                        @endif
                                     @else
                                         n'a pas de date d'expiration définie
                                     @endif
@@ -211,28 +236,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="studentSearch" class="form-label fw-bold">
-                            <i class="bi bi-person me-2 text-info"></i>
-                            Rechercher par email ou téléphone
-                        </label>
-                        <input type="text" class="form-control" id="studentSearch" 
-                               placeholder="Entrez l'email ou le téléphone de l'étudiant..." 
-                               autocomplete="off">
-                        <div class="form-text">
-                            Tapez au moins 3 caractères pour lancer la recherche
-                        </div>
-                    </div>
-
-                    <div id="searchResults" class="d-none">
-                        <h6 class="text-primary mb-3">Résultats de recherche</h6>
-                        <div id="studentsList"></div>
-                    </div>
-
-                    <div id="noResults" class="alert alert-warning d-none">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        Aucun étudiant trouvé pour cette recherche.
-                    </div>
+                    @livewire('admin.student-search')
                 </div>
             </div>
         </div>
@@ -258,9 +262,9 @@
                                 Durée (en jours) *
                             </label>
                             <input type="number" class="form-control" id="bulk_duration" name="duration_in_days" 
-                                   value="30" min="1" max="365" required>
+                                   value="90" min="90" max="365" required>
                             <div class="form-text">
-                                Entre 1 et 365 jours
+                                Minimum 90 jours (3 mois) — max 365 jours
                             </div>
                         </div>
 
@@ -347,100 +351,16 @@
         let searchTimeout;
         let selectedSubscription = null;
 
-        // Recherche d'étudiant en temps réel
-        document.getElementById('studentSearch').addEventListener('input', function(e) {
-            const search = e.target.value.trim();
-            
-            clearTimeout(searchTimeout);
-            
-            if (search.length < 3) {
-                document.getElementById('searchResults').classList.add('d-none');
-                document.getElementById('noResults').classList.add('d-none');
-                return;
+        // Écouter les événements du composant Livewire (attendre que Livewire soit prêt)
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Livewire !== 'undefined') {
+                Livewire.on('showUpdateModal', (data) => {
+                    if (data.user && data.subscriptions && data.subscriptions.length > 0) {
+                        showUpdateModalForSubscription(data.user.id, data.subscriptions[0]);
+                    }
+                });
             }
-
-            searchTimeout = setTimeout(() => {
-                fetch(`{{ route('subscriptions.searchStudent') }}?search=${encodeURIComponent(search)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const resultsDiv = document.getElementById('searchResults');
-                        const noResultsDiv = document.getElementById('noResults');
-                        const studentsList = document.getElementById('studentsList');
-                        
-                        if (data.users && data.users.length > 0) {
-                            let html = '';
-                            data.users.forEach(user => {
-                                const subscriptionsHtml = user.subscriptions && user.subscriptions.length > 0 ? 
-                                    user.subscriptions.map(sub => `
-                                        <div class="subscription-item border rounded p-2 mb-2">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <strong class="text-primary">${sub.formation ? sub.formation.title : (sub.course ? sub.course.title : (sub.chapter ? sub.chapter.title : 'N/A'))}</strong>
-                                                    <br>
-                                                    <small class="text-muted">
-                                                        Durée actuelle: ${sub.duration_in_days || 'Non définie'} jours
-                                                        ${sub.expires_at ? `| Expire: ${sub.expires_at}` : ''}
-                                                    </small>
-                                                </div>
-                                                <button class="btn btn-sm btn-outline-warning" 
-                                                        onclick="showUpdateModal(${user.id}, ${sub.id}, '${user.name}', '${sub.formation ? sub.formation.title : (sub.course ? sub.course.title : (sub.chapter ? sub.chapter.title : 'N/A'))}', ${sub.duration_in_days || 0})">
-                                                    <i class="bi bi-pencil"></i> Modifier
-                                                </button>
-                                            </div>
-                                        </div>
-                                    `).join('') : 
-                                    '<p class="text-muted">Aucune souscription trouvée</p>';
-                                
-                                html += `
-                                    <div class="student-item border rounded p-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <strong class="text-primary">${user.name}</strong><br>
-                                                <small class="text-muted">${user.email}</small>
-                                                ${user.phone ? `<br><small class="text-muted">📱 ${user.phone}</small>` : ''}
-                                            </div>
-                                        </div>
-                                        <div class="mt-2">
-                                            ${subscriptionsHtml}
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                            
-                            studentsList.innerHTML = html;
-                            resultsDiv.classList.remove('d-none');
-                            noResultsDiv.classList.add('d-none');
-                        } else {
-                            resultsDiv.classList.add('d-none');
-                            noResultsDiv.classList.remove('d-none');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erreur lors de la recherche:', error);
-                    });
-            }, 500);
         });
-
-        function showUpdateModal(userId, subscriptionId, userName, contentTitle, currentDuration) {
-            selectedSubscription = {
-                userId: userId,
-                subscriptionId: subscriptionId,
-                userName: userName,
-                contentTitle: contentTitle,
-                currentDuration: currentDuration
-            };
-
-            document.getElementById('subscriptionDetails').innerHTML = `
-                <strong>Étudiant:</strong> ${userName}<br>
-                <strong>Contenu:</strong> ${contentTitle}<br>
-                <strong>Durée actuelle:</strong> ${currentDuration} jours
-            `;
-
-            document.getElementById('newDuration').value = currentDuration;
-            
-            const modal = new bootstrap.Modal(document.getElementById('confirmUpdateModal'));
-            modal.show();
-        }
 
         document.getElementById('confirmUpdateBtn').addEventListener('click', function() {
             if (!selectedSubscription) return;
@@ -473,8 +393,6 @@
                 if (data.success) {
                     alert(data.message);
                     bootstrap.Modal.getInstance(document.getElementById('confirmUpdateModal')).hide();
-                    document.getElementById('studentSearch').value = '';
-                    document.getElementById('searchResults').classList.add('d-none');
                     location.reload();
                 } else {
                     alert(data.error || 'Erreur lors de la mise à jour');

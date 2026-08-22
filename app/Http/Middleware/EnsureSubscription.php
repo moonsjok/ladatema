@@ -20,11 +20,19 @@ class EnsureSubscription
         $formationId = $request->route('formation'); // ID de la formation dans la route
         $subscription = Subscription::where('user_id', $user->id)
             ->where('formation_id', $formationId)
-            ->where('is_validated', true)
+            ->latest()
             ->first();
 
         if (!$subscription) {
             abort(403, 'Vous devez souscrire à cette formation pour y accéder.');
+        }
+
+        if ($subscription->isExpired()) {
+            return redirect()->route('subscriptions.expired', $subscription->id);
+        }
+
+        if (!$subscription->is_validated) {
+            return redirect()->route('dashboard')->with('info', 'Votre souscription est en attente de validation.');
         }
 
         return $next($request);

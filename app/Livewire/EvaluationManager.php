@@ -55,7 +55,7 @@ class EvaluationManager extends Component
     public function toggleCorrectAnswer($index)
     {
         $questionType = $this->newQuestion['type'];
-        
+
         if ($questionType === Question::TYPE_SINGLE_CHOICE) {
             // Pour le choix unique, une seule réponse peut être correcte
             foreach ($this->newAnswers as $i => &$answer) {
@@ -87,10 +87,10 @@ class EvaluationManager extends Component
 
         // Validation spécifique selon le type
         $questionType = $this->newQuestion['type'];
-        
+
         if (in_array($questionType, [
-            Question::TYPE_SINGLE_CHOICE, 
-            Question::TYPE_MULTIPLE_CHOICE, 
+            Question::TYPE_SINGLE_CHOICE,
+            Question::TYPE_MULTIPLE_CHOICE,
             Question::TYPE_FIND_INTRUDER
         ])) {
             $this->validate([
@@ -134,7 +134,7 @@ class EvaluationManager extends Component
         // Réinitialiser le formulaire
         $this->reset(['newQuestion', 'newAnswers', 'answerInput']);
         $this->newQuestion = ['type' => 'single_choice', 'text' => '', 'points' => 1];
-        
+
         $this->refreshQuestions();
     }
 

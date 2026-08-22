@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('evaluation_id')->constrained()->onDelete('cascade')->comment('L\'identifiant de l\evaluation');
             $table->enum('type', ['multiple_choice', 'single_choice', 'text']);
             $table->text('question_text');
-            $table->integer('points')->default(1)->after('question_text')->comment('Points attribués à cette question');
+            $table->integer('points')->default(1)->comment('Points attribués à cette question');
             $table->timestamps();
             $table->softDeletes();
         });

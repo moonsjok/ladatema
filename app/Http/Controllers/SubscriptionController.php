@@ -19,6 +19,10 @@ use FedaPay\Transaction;
 use FedaPay\Customer;
 
 use App\Mail\SubscriptionReminder;
+use App\Mail\SubscriptionCreatedMail;
+use App\Mail\AdminNewSubscriptionMail;
+use App\Mail\SubscriptionValidatedMail;
+use App\Mail\SubscriptionUpdatedMail;
 
 
 
@@ -33,12 +37,7 @@ class SubscriptionController extends Controller
     }
     public function selectType()
     {
-        // Afficher la page où l'utilisateur choisit la formation, le cours ou le chapitre
-        $formations = Formation::all();
-        $courses = Course::all();
-        $chapters = Chapter::all();
-
-        return view('subscriptions.select', compact('formations', 'courses', 'chapters'));
+        return redirect()->route('guest.formationsList');
     }
 
     public function createAccount(Request $request)
@@ -116,6 +115,16 @@ class SubscriptionController extends Controller
 
             Auth::login($user); // Connexion automatique de l'utilisateur
 
+            // Événement d'inscription (déclenche l'e-mail de vérification)
+            event(new \Illuminate\Auth\Events\Registered($user));
+
+            // Envoi du mail de bienvenue
+            try {
+                Mail::to($user->email)->send(new \App\Mail\WelcomeUserMail($user));
+            } catch (\Exception $e) {
+                Log::error('Échec de l\'envoi du mail de bienvenue lors de la souscription : ' . $e->getMessage());
+            }
+
             return redirect()->route('subscriptions.confirm', [
                 'type' => $validated['type'],
                 'typeid' => $validated['typeid'],
@@ -146,7 +155,7 @@ class SubscriptionController extends Controller
 
             if ($transation->status === "approved") {
                 //approved
-                Subscription::create([
+                $subscription = Subscription::create([
                     'user_id' => $user->id,
                     'formation_id' => $request->type === 'formation' ? $request->typeid : null,
                     'course_id' => $request->type === 'course' ? $request->typeid : null,
@@ -156,6 +165,8 @@ class SubscriptionController extends Controller
                     'payment_reference' => $transation->reference,
                     'is_validated' => 1
                 ]);
+
+                $this->notifySubscriptionEvents($subscription);
 
                 $message = 'Votre souscription a été validée.';
                 return redirect()->route('dashboard')->with('success', $message);
@@ -269,7 +280,7 @@ class SubscriptionController extends Controller
         $paymentReference = $isValidated ? null : $validated['payment_reference'];
 
         try {
-            Subscription::create([
+            $subscription = Subscription::create([
                 'user_id' => $user->id,
                 'formation_id' => $validated['subscription_type'] === 'formation' ? $validated['subscription_typeid'] : null,
                 'course_id' => $validated['subscription_type'] === 'course' ? $validated['subscription_typeid'] : null,
@@ -279,6 +290,8 @@ class SubscriptionController extends Controller
                 'payment_reference' => $paymentReference,
                 'is_validated' => $isValidated, // Validation automatique si prix = 0
             ]);
+
+            $this->notifySubscriptionEvents($subscription);
 
             $message = $isValidated ? 'Votre souscription a été validée.' : 'Votre souscription a été envoyée pour validation.';
             return redirect()->route('dashboard')->with('success', $message);
@@ -594,9 +607,14 @@ class SubscriptionController extends Controller
         try {
             $subscription->update(['is_validated' => true]);
 
+            $this->notifySubscriptionValidated($subscription);
+
+            $itemTitle = $subscription->formation ? $subscription->formation->title : ($subscription->course ? $subscription->course->title : ($subscription->chapter ? $subscription->chapter->title : ''));
+            $userName = $subscription->user ? $subscription->user->name : '';
+
             return response()->json([
                 'success' => true,
-                'message' => "La souscription " . $subscription->type . " : " . $subscription->formation->title . " de " . $subscription->user->name . " a été validée.",
+                'message' => "La souscription " . $subscription->type . " : " . $itemTitle . " de " . $userName . " a été validée.",
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -682,12 +700,13 @@ class SubscriptionController extends Controller
             'course_id' => 'nullable|required_if:type,course|exists:courses,id',
             'chapter_id' => 'nullable|required_if:type,chapter|exists:chapters,id',
             'price' => 'required|integer|min:0',
-            'duration_in_days' => 'nullable|integer|min:1|max:365',
+            'duration_in_days' => 'nullable|integer|min:90|max:365',
             'payment_reference' => 'nullable|string|max:255',
             'is_validated' => 'boolean',
         ]);
 
         try {
+            $duration = max(90, (int)($validated['duration_in_days'] ?? 90));
             $subscription = Subscription::create([
                 'user_id' => $validated['user_id'],
                 'formation_id' => $validated['type'] === 'formation' ? $validated['formation_id'] : null,
@@ -695,11 +714,13 @@ class SubscriptionController extends Controller
                 'chapter_id' => $validated['type'] === 'chapter' ? $validated['chapter_id'] : null,
                 'type' => $validated['type'],
                 'price' => $validated['price'],
-                'duration_in_days' => $validated['duration_in_days'] ?? null,
-                'expires_at' => isset($validated['duration_in_days']) ? now()->addDays((int)$validated['duration_in_days']) : null,
+                'duration_in_days' => $duration,
+                'expires_at' => now()->addDays($duration),
                 'payment_reference' => $validated['payment_reference'],
                 'is_validated' => $validated['is_validated'] ?? false,
             ]);
+
+            $this->notifySubscriptionEvents($subscription);
 
             return redirect()->route('subscriptions.index')
                 ->with('success', 'Souscription créée avec succès.');
@@ -735,12 +756,21 @@ class SubscriptionController extends Controller
             'course_id' => 'nullable|required_if:type,course|exists:courses,id',
             'chapter_id' => 'nullable|required_if:type,chapter|exists:chapters,id',
             'price' => 'required|integer|min:0',
-            'duration_in_days' => 'nullable|integer|min:1|max:365',
+            'duration_in_days' => 'nullable|integer|min:90|max:365',
             'payment_reference' => 'nullable|string|max:255',
             'is_validated' => 'boolean',
         ]);
 
         try {
+            $oldDuration = $subscription->duration_in_days;
+            $oldValidatedState = (bool) $subscription->is_validated;
+            $oldPrice = $subscription->price;
+
+            $newValidatedState = isset($validated['is_validated']) ? (bool) $validated['is_validated'] : false;
+            $duration = max(90, (int)($validated['duration_in_days'] ?? 90));
+            $baseDate = $subscription->created_at ? (clone $subscription->created_at) : now();
+            $newExpiresAt = (clone $baseDate)->addDays($duration);
+
             $subscription->update([
                 'user_id' => $validated['user_id'],
                 'formation_id' => $validated['type'] === 'formation' ? $validated['formation_id'] : null,
@@ -748,11 +778,38 @@ class SubscriptionController extends Controller
                 'chapter_id' => $validated['type'] === 'chapter' ? $validated['chapter_id'] : null,
                 'type' => $validated['type'],
                 'price' => $validated['price'],
-                'duration_in_days' => $validated['duration_in_days'],
-                'expires_at' => $subscription->created_at->addDays((int)$validated['duration_in_days']),
+                'duration_in_days' => $duration,
+                'expires_at' => $newExpiresAt,
                 'payment_reference' => $validated['payment_reference'],
-                'is_validated' => $validated['is_validated'] ?? false,
+                'is_validated' => $newValidatedState,
             ]);
+
+            // Construction de la liste des modifications pour la notification
+            $changes = [];
+            if ($oldDuration != $duration) {
+                $changes[] = "La durée de validité a été modifiée de <strong>{$oldDuration} jours</strong> à <strong>{$duration} jours</strong> (Nouvelle expiration : <strong>" . $newExpiresAt->format('d/m/Y') . "</strong>).";
+            }
+            if ($oldPrice != $validated['price']) {
+                $changes[] = "Le prix de la souscription a été révisé à <strong>" . number_format($validated['price'], 0, ',', ' ') . " FCFA</strong>.";
+            }
+
+            if (!$oldValidatedState && $newValidatedState) {
+                $this->notifySubscriptionValidated($subscription);
+            } elseif ($oldValidatedState && !$newValidatedState) {
+                $changes[] = "Statut : La souscription est repassée en attente de validation.";
+            }
+
+            // Envoi de l'e-mail de notification de mise à jour s'il y a des modifications
+            if (!empty($changes)) {
+                try {
+                    $subscription->loadMissing(['user', 'formation', 'course', 'chapter']);
+                    if ($subscription->user && !empty($subscription->user->email)) {
+                        Mail::to($subscription->user->email)->send(new SubscriptionUpdatedMail($subscription, $changes));
+                    }
+                } catch (\Exception $mailEx) {
+                    Log::error("Erreur lors de l'envoi du mail de mise à jour de souscription : " . $mailEx->getMessage());
+                }
+            }
 
             return redirect()->route('subscriptions.index')
                 ->with('success', 'Souscription mise à jour avec succès.');
@@ -819,12 +876,13 @@ class SubscriptionController extends Controller
     public function bulkUpdateDuration(Request $request)
     {
         $validated = $request->validate([
-            'duration_in_days' => 'required|integer|min:1|max:365',
+            'duration_in_days' => 'required|integer|min:90|max:365',
             'only_without_expiration' => 'boolean',
         ]);
 
         try {
             $query = Subscription::query();
+            $duration = max(90, (int)$validated['duration_in_days']);
 
             // Si coché, ne mettre à jour que les souscriptions sans date d'expiration
             if ($validated['only_without_expiration']) {
@@ -835,14 +893,15 @@ class SubscriptionController extends Controller
             $updatedCount = 0;
 
             foreach ($subscriptions as $subscription) {
-                $subscription->duration_in_days = (int)$validated['duration_in_days'];
-                $subscription->expires_at = $subscription->created_at->addDays((int)$validated['duration_in_days']);
+                $subscription->duration_in_days = $duration;
+                $baseDate = $subscription->created_at ? (clone $subscription->created_at) : now();
+                $subscription->expires_at = (clone $baseDate)->addDays($duration);
                 $subscription->save();
                 $updatedCount++;
             }
 
             return redirect()->back()
-                ->with('success', "{$updatedCount} souscription(s) mise(s) à jour avec une durée de {$validated['duration_in_days']} jours.");
+                ->with('success', "{$updatedCount} souscription(s) mise(s) à jour avec une durée de {$duration} jours.");
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Erreur lors de la mise à jour groupée: ' . $e->getMessage());
@@ -900,15 +959,14 @@ class SubscriptionController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'subscription_id' => 'required|exists:subscriptions,id',
-            'duration_in_days' => 'required|integer|min:1|max:365',
+            'duration_in_days' => 'required|integer|min:90|max:365',
         ]);
 
         try {
             // Vérifier les permissions de l'utilisateur connecté
             $authUser = auth()->user();
 
-            // Vérifier si l'utilisateur a les permissions de gérer les souscriptions
-            if (!$authUser || !$authUser->hasPermissionTo('manage subscriptions')) {
+            if (!$authUser || !in_array($authUser->role, ['dev', 'owner'])) {
                 return response()->json(['error' => 'Permission non autorisée'], 403);
             }
 
@@ -920,24 +978,103 @@ class SubscriptionController extends Controller
                 return response()->json(['error' => 'Cette souscription n\'appartient pas à cet utilisateur'], 400);
             }
 
-            // Mettre à jour la durée et calculer la nouvelle expiration
-            $subscription->duration_in_days = (int)$validated['duration_in_days'];
-            // Utiliser une copie de created_at pour éviter de la modifier
-            $subscription->expires_at = (clone $subscription->created_at)->addDays((int)$validated['duration_in_days']);
+            $oldDuration = $subscription->duration_in_days;
+            $duration = max(90, (int)$validated['duration_in_days']);
+            $subscription->duration_in_days = $duration;
+            $baseDate = $subscription->created_at ? (clone $subscription->created_at) : now();
+            $subscription->expires_at = (clone $baseDate)->addDays($duration);
             $subscription->save();
+
+            // Envoi de la notification e-mail si la durée a changé
+            if ($oldDuration != $duration) {
+                try {
+                    $subscription->loadMissing(['user', 'formation', 'course', 'chapter']);
+                    $newExpiresAtFormatted = $subscription->expires_at ? $subscription->expires_at->format('d/m/Y') : 'N/A';
+                    $changes = [
+                        "La durée de validité de votre souscription a été modifiée de <strong>{$oldDuration} jours</strong> à <strong>{$duration} jours</strong> (Nouvelle date d'expiration : <strong>{$newExpiresAtFormatted}</strong>)."
+                    ];
+                    if ($user && !empty($user->email)) {
+                        Mail::to($user->email)->send(new SubscriptionUpdatedMail($subscription, $changes));
+                    }
+                } catch (\Exception $mailEx) {
+                    Log::error("Erreur lors de l'envoi du mail de modification de durée : " . $mailEx->getMessage());
+                }
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => "Souscription de {$user->name} mise à jour avec {$validated['duration_in_days']} jours",
+                'message' => "Souscription de {$user->name} mise à jour avec {$duration} jours",
                 'subscription' => [
                     'id' => $subscription->id,
                     'duration_in_days' => $subscription->duration_in_days,
-                    'expires_at' => $subscription->expires_at->format('d/m/Y H:i'),
+                    'expires_at' => $subscription->expires_at ? $subscription->expires_at->format('d/m/Y H:i') : 'N/A',
                     'content' => $subscription->formation ? $subscription->formation->title : ($subscription->course ? $subscription->course->title : ($subscription->chapter ? $subscription->chapter->title : 'N/A'))
                 ]
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Erreur lors de la mise à jour: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Envoyer les notifications e-mails liées aux souscriptions (étudiant + admin).
+     */
+    private function notifySubscriptionEvents(Subscription $subscription)
+    {
+        try {
+            $subscription->loadMissing(['user', 'formation', 'course', 'chapter']);
+            $user = $subscription->user;
+
+            if ($user && !empty($user->email)) {
+                // 1. Mail d'accusé de réception pour l'étudiant
+                Mail::to($user->email)->send(new SubscriptionCreatedMail($subscription));
+
+                // 2. Si directement validé
+                if ($subscription->is_validated) {
+                    Mail::to($user->email)->send(new SubscriptionValidatedMail($subscription));
+                }
+            }
+
+            // 3. Alerte pour l'admin
+            $adminEmail = config('mail.from.address');
+            if ($adminEmail) {
+                Mail::to($adminEmail)->send(new AdminNewSubscriptionMail($subscription));
+            }
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi des e-mails de souscription : " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Envoyer l'e-mail de validation de souscription à l'étudiant.
+     */
+    private function notifySubscriptionValidated(Subscription $subscription)
+    {
+        try {
+            $subscription->loadMissing(['user', 'formation', 'course', 'chapter']);
+            $user = $subscription->user;
+
+            if ($user && !empty($user->email)) {
+                Mail::to($user->email)->send(new SubscriptionValidatedMail($subscription));
+            }
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi du mail de validation de souscription : " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Afficher la page de souscription expirée avec détails et contact de prolongation.
+     */
+    public function showExpired(Subscription $subscription)
+    {
+        $user = auth()->user();
+
+        if ($user && $user->role === 'student' && $subscription->user_id !== $user->id) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $subscription->loadMissing(['user', 'formation', 'course', 'chapter']);
+
+        return view('subscriptions.expired', compact('subscription'));
     }
 }

@@ -53,9 +53,9 @@ class MediaController extends Controller
 
         if ($request->ajax()) {
             $mediaCollection = self::COLLECTION_MAPPING[$type];
-            
+
             $query = Media::where('collection_name', $mediaCollection);
-            
+
             // Filtrer par type de fichier exact
             if ($type === 'images') {
                 $query->whereIn('mime_type', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
@@ -66,13 +66,13 @@ class MediaController extends Controller
             } elseif ($type === 'txt_files') {
                 $query->whereIn('mime_type', ['text/plain', 'text/markdown']);
             }
-            
+
             // Si l'utilisateur n'est pas admin, ne montrer que ses médias ou les publics
             if (auth()->user()->role !== 'dev' && auth()->user()->role !== 'owner') {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('model_type', User::class)
-                      ->where('model_id', auth()->id())
-                      ->orWhere('custom_properties->is_public', true);
+                        ->where('model_id', auth()->id())
+                        ->orWhere('custom_properties->is_public', true);
                 });
             }
 
@@ -80,14 +80,13 @@ class MediaController extends Controller
                 ->addColumn('preview', function ($media) use ($type) {
                     // Utiliser l'URL sécurisée pour tous les aperçus
                     $secureUrl = route('media.file.secure', $media->id);
-                    
+
                     if ($type === 'images') {
                         return '
                         <div class="img-thumbnail text-center">
                         <img src="' . $secureUrl . '" alt="' . $media->name . '" class="-img-thumbnail" style=".max-width: 60px; max-height: 200px; cursor: pointer;" onclick="window.open(\'' . $secureUrl . '\', \'_blank\')">
                         </div>
                         ';
-                    
                     } elseif ($type === 'videos') {
                         return '<video class="img-thumbnail bg-none" style=".max-width: 300px; max-height: 200px;" controls onclick="window.open(\'' . $secureUrl . '\', \'_blank\')">
                                     <source src="' . $secureUrl . '" type="video/mp4">
@@ -103,9 +102,9 @@ class MediaController extends Controller
                     $mediaCreatedAt = $media->created_at->format('d/m/Y H:i');
                     return '<strong>' . $modelName . '</strong>
                     <br>
-                    Taille : '. $mediaSize .'
+                    Taille : ' . $mediaSize . '
                     <br>
-                    Date : '.  $mediaCreatedAt  .'
+                    Date : ' .  $mediaCreatedAt  . '
                     <br>
                     <small class="text-muted">' . $description . '</small>';
                 })
@@ -130,24 +129,26 @@ class MediaController extends Controller
                                    title="Voir">
                                    <i class="bi bi-eye"></i>
                                </a>';
-                    
+
                     // Bouton copier URL
                     $copyBtn = '<button class="btn btn-sm btn-outline-info me-1" 
                                        onclick="copyUrl(\'' . $secureUrl . '\', \'' . $media->getCustomProperty('name', $media->name) . '\')" 
                                        title="Copier l\'URL">
                                        <i class="bi bi-clipboard"></i>
                                    </button>';
-                    
+
                     // Actions de modification seulement pour le propriétaire ou admin
-                    if (auth()->user()->role === 'dev' || auth()->user()->role === 'owner' || 
-                        ($media->model_type === User::class && $media->model_id === auth()->id())) {
-                        
+                    if (
+                        auth()->user()->role === 'dev' || auth()->user()->role === 'owner' ||
+                        ($media->model_type === User::class && $media->model_id === auth()->id())
+                    ) {
+
                         $editBtn = '<a href="' . route('media.edit', [$media->collection_name, $media->id]) . '" 
                                        class="btn btn-sm btn-outline-warning me-1" 
                                        title="Modifier">
                                        <i class="bi bi-pencil"></i>
                                    </a>';
-                        
+
                         $deleteBtn = '<form action="' . route('media.destroy', [$media->collection_name, $media->id]) . '" 
                                           method="POST" 
                                           style="display: inline-block;"
@@ -157,10 +158,10 @@ class MediaController extends Controller
                                               <i class="bi bi-trash"></i>
                                           </button>
                                       </form>';
-                        
+
                         return $showBtn . $copyBtn . $editBtn . $deleteBtn;
                     }
-                    
+
                     return $showBtn . $copyBtn;
                 })
                 ->rawColumns(['preview', 'name', 'actions'])
@@ -191,11 +192,20 @@ class MediaController extends Controller
             abort(404, 'Type de fichier non valide');
         }
 
+        // Définir les limites de taille selon le type de fichier
+        $maxSize = match ($type) {
+            'videos' => '2048000',  // 2GB en KB
+            'images' => '10240',    // 10MB en KB
+            'pdfs' => '5120',       // 5MB en KB
+            'texts' => '5120',      // 5MB en KB
+            default => '10240'      // 10MB par défaut
+        };
+
         $request->validate([
             'file' => [
                 'required',
                 'file',
-                'max:' . ($type === 'videos' ? '2048000' : '10240'), // 2GB pour vidéos, 10MB pour autres
+                'max:' . $maxSize,
                 'mimes:' . implode(',', self::FILE_TYPES[$type])
             ],
             'name' => 'required|string|max:255',
@@ -207,15 +217,15 @@ class MediaController extends Controller
         //dd($mediaCollection);
         // Utiliser l'utilisateur connecté pour ajouter le média
         $user = auth()->user();
-        
-        // Ajouter le fichier avec les métadonnées
+
+        // Ajouter le fichier avec les métadonnées sur R2
         $media = $user->addMediaFromRequest('file')
             ->withCustomProperties([
                 'name' => $request->name,
                 'description' => $request->description,
                 'is_public' => $request->boolean('is_public', false)
             ])
-            ->toMediaCollection($mediaCollection);
+            ->toMediaCollection($mediaCollection, 'r2');
 
         return redirect()->route('media.index', $type)
             ->with('success', 'Fichier uploadé avec succès: ' . $request->name);
@@ -235,7 +245,7 @@ class MediaController extends Controller
         }
 
         $media = Media::findOrFail($mediaId);
-        
+
         // Vérifier les permissions
         if (auth()->user()->role !== 'dev' && auth()->user()->role !== 'owner') {
             if ($media->model_type !== User::class || $media->model_id !== auth()->id()) {
@@ -257,7 +267,7 @@ class MediaController extends Controller
     public function edit($type, $mediaId)
     {
         $media = Media::findOrFail($mediaId);
-        
+
         // Vérifier les permissions
         if (auth()->user()->role !== 'dev' && auth()->user()->role !== 'owner') {
             if ($media->model_type !== User::class || $media->model_id !== auth()->id()) {
@@ -274,7 +284,7 @@ class MediaController extends Controller
     public function update(Request $request, $type, $mediaId)
     {
         $media = Media::findOrFail($mediaId);
-        
+
         // Vérifier les permissions
         if (auth()->user()->role !== 'dev' && auth()->user()->role !== 'owner') {
             if ($media->model_type !== User::class || $media->model_id !== auth()->id()) {
@@ -291,9 +301,18 @@ class MediaController extends Controller
 
         // Ajouter la validation du fichier si présent
         if ($request->hasFile('file')) {
+            // Définir les limites de taille selon le type de fichier
+            $maxSize = match ($type) {
+                'videos' => '2048000',  // 2GB en KB
+                'images' => '10240',    // 10MB en KB
+                'pdfs' => '5120',       // 5MB en KB
+                'texts' => '5120',      // 5MB en KB
+                default => '10240'      // 10MB par défaut
+            };
+
             $validationRules['file'] = [
                 'file',
-                'max:' . ($type === 'videos' ? '2048000' : '10240'), // 2GB pour vidéos, 10MB pour autres
+                'max:' . $maxSize,
                 'mimes:' . implode(',', self::FILE_TYPES[$type])
             ];
         }
@@ -311,16 +330,16 @@ class MediaController extends Controller
             try {
                 // Sauvegarder l'ID original
                 $originalId = $media->id;
-                
-                // Ajouter le nouveau fichier
+
+                // Ajouter le nouveau fichier sur R2
                 $newMedia = auth()->user()->addMediaFromRequest('file')
                     ->withCustomProperties([
                         'name' => $request->name,
                         'description' => $request->description,
                         'is_public' => $request->boolean('is_public', false)
                     ])
-                    ->toMediaCollection($media->collection_name);
-                
+                    ->toMediaCollection($media->collection_name, 'r2');
+
                 // Mettre à jour le média original avec les nouvelles informations du fichier
                 // sans supprimer l'enregistrement original
                 \DB::table('media')
@@ -336,13 +355,12 @@ class MediaController extends Controller
                         'responsive_images' => $newMedia->responsive_images,
                         'updated_at' => now()
                     ]);
-                
+
                 // Supprimer le nouveau média en double
                 $newMedia->delete();
-                
+
                 // Recharger le média original avec les nouvelles informations
                 $media = Media::find($originalId);
-                
             } catch (\Exception $e) {
                 // Masquer les détails techniques pour des raisons de sécurité
                 \Log::error('Erreur lors du remplacement du média: ' . $e->getMessage());
@@ -362,7 +380,7 @@ class MediaController extends Controller
     public function destroy($type, $mediaId)
     {
         $media = Media::findOrFail($mediaId);
-        
+
         // Vérifier les permissions
         if (auth()->user()->role !== 'dev' && auth()->user()->role !== 'owner') {
             if ($media->model_type !== User::class || $media->model_id !== auth()->id()) {

@@ -36,8 +36,9 @@
                 <h4 class="mt-4"><i class="bi bi-envelope-fill"></i> Contactez-nous</h4>
                 <p class="mb-3">Nous sommes à votre disposition pour toute question ou demande. </p>
 
-                <form action="{{ route('contact.send') }}" method="POST" novalidate>
+                <form action="{{ route('contact.send') }}" method="POST" id="contact-form" novalidate>
                     @csrf
+                    <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
 
                     <div class="mb-3 form-floating">
                         <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
@@ -66,8 +67,16 @@
                         @enderror
                     </div>
 
+                    @error('g-recaptcha-response')
+                        <div class="text-danger small mb-3"><i class="bi bi-exclamation-triangle-fill"></i> {{ $message }}</div>
+                    @enderror
+
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">
+                        <button type="submit"
+                            class="g-recaptcha btn btn-primary btn-lg"
+                            data-sitekey="{{ config('services.recaptcha.site_key') }}"
+                            data-callback="onReCaptchaSubmit"
+                            data-action="contact">
                             <i class="bi bi-send-fill"></i> Envoyer
                         </button>
                     </div>
@@ -76,4 +85,15 @@
         </div>
     </div>
 
+@push('script')
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script>
+        function onReCaptchaSubmit(token) {
+            document.getElementById('g-recaptcha-response').value = token;
+            document.getElementById('contact-form').submit();
+        }
+    </script>
+@endpush
 @endsection
+
+

@@ -16,6 +16,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Configurer la taille maximale des fichiers pour MediaLibrary
         config(['media-library.max_file_size' => 2 * 1024 * 1024 * 1024]); // 2GB
+
+        if (class_exists(\Laravel\Dusk\DuskServiceProvider::class)) {
+            $this->app->register(\Laravel\Dusk\DuskServiceProvider::class);
+        }
     }
 
     /**

@@ -4,8 +4,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\EnsureProfileIsComplete;
 use RealRashid\SweetAlert\Facades\Alert;
-use \App\Http\Middleware\EnsureSubscription;
+use App\Http\Middleware\EnsureSubscription;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'CheckRole' => CheckRole::class,
             'Alert' => Alert::class,
             'subscription' => EnsureSubscription::class,
+            'profile.complete' => EnsureProfileIsComplete::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

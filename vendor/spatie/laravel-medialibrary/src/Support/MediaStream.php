@@ -11,6 +11,7 @@ use ZipStream\ZipStream;
 class MediaStream implements Responsable
 {
     protected Collection $mediaItems;
+
     private array $nameCounters = [];
 
     protected array $zipOptions;
@@ -78,7 +79,7 @@ class MediaStream implements Responsable
         return new StreamedResponse(fn () => $this->getZipStream(), 200, $headers);
     }
 
-    public function getZipStream(): ZipStream
+    public function getZipStream(bool $finish = true): ZipStream
     {
         $this->zipOptions['outputName'] = $this->zipName;
         $zip = new ZipStream(...$this->zipOptions);
@@ -93,7 +94,9 @@ class MediaStream implements Responsable
             }
         });
 
-        $zip->finish();
+        if ($finish) {
+            $zip->finish();
+        }
 
         return $zip;
     }
@@ -112,7 +115,7 @@ class MediaStream implements Responsable
         $fileName = $mediaItems[$currentIndex]->getDownloadFilename();
 
         $prefix = $this->getZipFileNamePrefix($mediaItems, $currentIndex);
-        $key = $prefix . $fileName;
+        $key = $prefix.$fileName;
 
         $count = ($this->nameCounters[$key] ?? 0);
         $this->nameCounters[$key] = $count + 1;
@@ -129,6 +132,18 @@ class MediaStream implements Responsable
 
     protected function getZipFileNamePrefix(Collection $mediaItems, int $currentIndex): string
     {
-        return $mediaItems[$currentIndex]->hasCustomProperty('zip_filename_prefix') ? $mediaItems[$currentIndex]->getCustomProperty('zip_filename_prefix') : '';
+        $media = $mediaItems[$currentIndex];
+
+        if (! $media->hasCustomProperty('zip_filename_prefix')) {
+            return '';
+        }
+
+        $prefix = str_replace('\\', '/', (string) $media->getCustomProperty('zip_filename_prefix'));
+
+        $prefix = collect(explode('/', $prefix))
+            ->reject(fn (string $segment) => $segment === '.' || $segment === '..')
+            ->implode('/');
+
+        return ltrim($prefix, '/');
     }
 }

@@ -16,6 +16,7 @@ use App\Models\Formation;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ContactMail;
 use Illuminate\Support\Facades\Config;
+use App\Rules\ReCaptcha;
 
 class UnsecureController extends Controller
 {
@@ -104,6 +105,9 @@ Créateur, repreneur ou chef d’entreprise, nos experts comptables vous accompa
             'name' => 'required|string|max:255',
             'email' => 'required|email',
             'message' => 'required|string|min:10',
+            'g-recaptcha-response' => ['required', new ReCaptcha('contact')],
+        ], [
+            'g-recaptcha-response.required' => 'La validation de sécurité reCAPTCHA est requise.',
         ]);
 
         // Récupérer le destinataire depuis la configuration

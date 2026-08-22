@@ -87,20 +87,18 @@ class EvaluationTake extends Component
 
     private function emitQuestionChanged()
     {
-
         // Restaurer la réponse précédemment sélectionnée pour cette question
         $currentQuestion = $this->questions[$this->currentQuestionIndex];
-        $this->currentAnswer = $this->answers[$currentQuestion->id] ?? null;
         
-               
-
-
+        // Restaurer selon le type de question
+        if ($currentQuestion->type === 'multiple_choice') {
+            $this->currentAnswer = $this->answers[$currentQuestion->id] ?? [];
+        } else {
+            $this->currentAnswer = $this->answers[$currentQuestion->id] ?? null;
+        }
+        
         $this->dispatch('questionChanged', $this->currentQuestionIndex);
-//   dd(
-//          '  question: '. $this->questions
-//          .'   questionIndex :'. $this->currentQuestionIndex
-//          .' Answers '. print_r($this->answers) );
-     }
+    }
 
     public function selectAnswer($answerId)
     {
@@ -114,19 +112,44 @@ class EvaluationTake extends Component
                 $this->answers[$currentQuestion->id] = [];
             }
             
+            // Log avant modification
+            \Log::info('selectAnswer - AVANT', [
+                'question_id' => $currentQuestion->id,
+                'answer_id' => $answerId,
+                'answers_before' => $this->answers[$currentQuestion->id],
+                'currentAnswer_before' => $this->currentAnswer
+            ]);
+            
             $answerIndex = array_search($answerId, $this->answers[$currentQuestion->id]);
             
             if ($answerIndex !== false) {
                 // Désélectionner la réponse
                 unset($this->answers[$currentQuestion->id][$answerIndex]);
                 $this->answers[$currentQuestion->id] = array_values($this->answers[$currentQuestion->id]);
+                \Log::info('selectAnswer - DÉSÉLECTION', [
+                    'question_id' => $currentQuestion->id,
+                    'answer_id' => $answerId,
+                    'answers_after' => $this->answers[$currentQuestion->id]
+                ]);
             } else {
                 // Sélectionner la réponse
                 $this->answers[$currentQuestion->id][] = $answerId;
+                \Log::info('selectAnswer - SÉLECTION', [
+                    'question_id' => $currentQuestion->id,
+                    'answer_id' => $answerId,
+                    'answers_after' => $this->answers[$currentQuestion->id]
+                ]);
             }
             
             $this->currentAnswer = $this->answers[$currentQuestion->id];
-
+            
+            // Log après modification
+            \Log::info('selectAnswer - APRÈS', [
+                'question_id' => $currentQuestion->id,
+                'answers_final' => $this->answers[$currentQuestion->id],
+                'currentAnswer_final' => $this->currentAnswer,
+                'currentAnswer_type' => gettype($this->currentAnswer)
+            ]);
 
         } elseif ($currentQuestion->type === 'text') {
             // Pour les questions texte, stocker directement la réponse texte
@@ -322,12 +345,13 @@ class EvaluationTake extends Component
             return false;
         }
         
+        $selectedAnswer = $this->answers[$currentQuestion->id] ?? null;
+        
         if ($currentQuestion->type === 'multiple_choice') {
-            $selectedAnswers = $this->answers[$currentQuestion->id] ?? [];
-            return in_array($answerId, $selectedAnswers);
+            return is_array($selectedAnswer) && in_array($answerId, $selectedAnswer);
         }
         
-        return $this->answers[$currentQuestion->id] == $answerId;
+        return $selectedAnswer == $answerId;
     }
 
     public function getProgressPercentage()

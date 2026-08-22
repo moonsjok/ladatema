@@ -28,7 +28,7 @@
                             <i class="bi bi-envelope-fill text-primary me-2"></i>
                             <strong>Email :</strong> {{ $user->email }}
                         </p>
-                        @if(!empty($user->phone_call) || !empty($user->phone_whatsapp))
+                        @if (!empty($user->phone_call) || !empty($user->phone_whatsapp))
                             <p>
                                 <i class="bi bi-telephone-fill text-primary me-2"></i>
                                 <strong>Téléphone (appel) :</strong>
@@ -71,11 +71,11 @@
                         @csrf
                         <input type="hidden" name="subscription_type" value="{{ $type }}">
                         <input type="hidden" name="subscription_typeid" value="{{ $item->id }}">
-                            <input type="hidden" name="prenoms" value="{{ $user->prenoms ?? '' }}">
-                            <input type="hidden" name="nom" value="{{ $user->nom ?? '' }}">
-                            <input type="hidden" name="email" value="{{ $user->email }}">
-                            <input type="hidden" name="phone_call" value="{{ $user->phone_call ?? '' }}">
-                            <input type="hidden" name="phone_whatsapp" value="{{ $user->phone_whatsapp ?? '' }}">
+                        <input type="hidden" name="prenoms" value="{{ $user->prenoms ?? '' }}">
+                        <input type="hidden" name="nom" value="{{ $user->nom ?? '' }}">
+                        <input type="hidden" name="email" value="{{ $user->email }}">
+                        <input type="hidden" name="phone_call" value="{{ $user->phone_call ?? '' }}">
+                        <input type="hidden" name="phone_whatsapp" value="{{ $user->phone_whatsapp ?? '' }}">
                         <input type="hidden" name="prenoms" value="{{ $user->prenoms ?? '' }}">
                         <input type="hidden" name="nom" value="{{ $user->nom ?? '' }}">
                         <input type="hidden" name="email" value="{{ $user->email }}" required>
@@ -96,7 +96,7 @@
 
                     <h3 class="text-center">J'ai déjà payé. </h3>
 
-                    <form method="POST" action="{{ route('subscriptions.store') }}">
+                    <form method="POST" action="{{ route('subscriptions.store.public') }}">
                         @csrf
                         <input type="hidden" name="subscription_type" value="{{ $type }}">
                         <input type="hidden" name="subscription_typeid" value="{{ $item->id }}">
@@ -141,11 +141,23 @@
                             <i class="bi bi-arrow-left me-2"></i> Retour
                         </a>
 
-                        <form method="POST" action="{{ route('subscriptions.store') }}">
+                        <form method="POST" action="{{ route('subscriptions.store.public') }}">
                             @csrf
                             <input type="hidden" name="subscription_type" value="{{ $type }}">
                             <input type="hidden" name="subscription_typeid" value="{{ $item->id }}">
 
+                            @php
+                                // Extraire le prénom depuis le nom complet de l'utilisateur
+$fullName = trim(($user->prenoms ?? '') . ' ' . ($user->nom ?? '') ?: $user->name);
+$firstName = $user->prenoms ?? (explode(' ', $fullName)[0] ?? $fullName);
+                            @endphp
+
+                            <!-- Champs pour FedaPay -->
+                            <input type="hidden" name="firstname" value="{{ $firstName }}">
+                            <input type="hidden" name="lastname" value="{{ $user->nom ?? '' }}">
+                            <input type="hidden" name="email" value="{{ $user->email }}">
+                            <input type="hidden" name="phone"
+                                value="{{ $user->phone_call ?? ($user->phone_whatsapp ?? '') }}">
 
                             <button type="submit" class="btn btn-success">
                                 <i class="bi bi-check-circle me-2"></i> Confirmer la souscription

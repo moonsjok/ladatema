@@ -20,13 +20,14 @@ class PaymentController extends Controller
     {
         // Valider les données reçues
         $request->validate([
-            'prenom' => 'required|string|max:255',
+            'prenoms' => 'required|string|max:255',
+            'nom' => 'required|string|max:255',
             'email' => 'required|email',
             'amount' => 'required|numeric|min:1',
             // 'phone' => 'required|string', // Numéro de téléphone obligatoire
             // 'country' => 'required|string|min:2|max:2' // Code pays (ex: 'bj', 'tg')
         ]);
-
+        // dd($request);
         try {
 
 
@@ -48,8 +49,8 @@ class PaymentController extends Controller
             } else {
                 // ❌ Le client n'existe pas, on le crée
                 $customer = Customer::create([
-                    "firstname" => $request->prenom,
-                    "lastname" => "Doe",
+                    "firstname" => $request->prenoms,
+                    "lastname" => $request->nom,
                     "email" => $request->email,
                     "phone_number" => [
                         "number" => '64000001',

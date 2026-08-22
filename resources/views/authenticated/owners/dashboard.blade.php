@@ -5,6 +5,60 @@
 @section('dashboard-content')
 
     <div class="container-fluid mt-3">
+        @if(isset($topNotifications) && $topNotifications->count() > 0)
+            <div class="row px-2 mb-3">
+                <div class="col-12">
+                    @foreach($topNotifications as $topNotif)
+                        <div class="alert alert-{{ $topNotif->is_important ? 'danger' : 'info' }} alert-dismissible fade show shadow-sm rounded-4 border-0 p-3 mb-2" id="notif-banner-owner-{{ $topNotif->id }}" role="alert">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3 fs-3 text-{{ $topNotif->is_important ? 'danger' : 'info' }}">
+                                    <i class="bi {{ $topNotif->is_important ? 'bi-exclamation-triangle-fill' : 'bi-bell-fill' }}"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <h5 class="alert-heading fw-bold mb-0 me-2">{{ $topNotif->title }}</h5>
+                                        @if($topNotif->is_important)
+                                            <span class="badge bg-danger rounded-pill">Important</span>
+                                        @endif
+                                    </div>
+                                    <p class="mb-0 text-dark" style="white-space: pre-line;">{{ $topNotif->message }}</p>
+                                    <small class="text-muted d-block mt-1" style="font-size: 0.8rem;">
+                                        <i class="bi bi-clock me-1"></i> De : {{ $topNotif->sender->name ?? 'Développeur' }} ({{ $topNotif->created_at->diffForHumans() }})
+                                    </small>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill ms-2" onclick="markOwnerNotificationRead({{ $topNotif->id }})" title="Marquer comme lu">
+                                        <i class="bi bi-check-lg me-1"></i> Marquer comme lu
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <script>
+                function markOwnerNotificationRead(notifId) {
+                    fetch('/app-notifications/' + notifId + '/read', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            const elem = document.getElementById('notif-banner-owner-' + notifId);
+                            if (elem) {
+                                elem.classList.remove('show');
+                                setTimeout(() => elem.remove(), 300);
+                            }
+                        }
+                    }).catch(err => console.error(err));
+                }
+            </script>
+        @endif
+
         <div class="row g-3">
 
             <!-- Statistiques globales -->

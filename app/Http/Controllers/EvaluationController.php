@@ -58,12 +58,12 @@ class EvaluationController extends Controller
 
         $modelType = session('evaluation_creation.model_type');
         $modelClass = $modelType;
-        
+
         // Récupérer tous les éléments pour ce type avec gestion spécifique pour les chapitres
         if ($modelType === 'App\Models\Chapter') {
             // Les chapitres n'ont pas de colonne description, seulement content
             $items = $modelClass::select('id', 'title')->paginate(10);
-            
+
             // Ajouter une description vide pour chaque chapitre pour éviter les erreurs dans la vue
             $items->getCollection()->transform(function ($item) {
                 $item->description = ''; // Initialiser avec une description vide
@@ -73,7 +73,7 @@ class EvaluationController extends Controller
             // Formations et cours ont une colonne description
             $items = $modelClass::select('id', 'title', 'description')->paginate(10);
         }
-        
+
         return view('authenticated.owners.evaluations.create-step-2', compact('items', 'modelType'));
     }
 
@@ -101,7 +101,7 @@ class EvaluationController extends Controller
         $sessionData = session('evaluation_creation');
         $modelClass = $sessionData['model_type'];
         $model = $modelClass::findOrFail($sessionData['model_id']);
-        
+
         // Gérer spécifiquement les chapitres qui n'ont pas de description
         if ($sessionData['model_type'] === 'App\Models\Chapter') {
             // Ajouter une description vide si elle n'existe pas
@@ -109,14 +109,14 @@ class EvaluationController extends Controller
                 $model->description = ''; // Description vide pour les chapitres
             }
         }
-        
+
         return view('authenticated.owners.evaluations.create-step-3', compact('model', 'sessionData'));
     }
 
     public function storeStep3(Request $request)
     {
         $sessionData = session('evaluation_creation');
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -160,7 +160,7 @@ class EvaluationController extends Controller
         return redirect()->route('evaluations.show', $evaluation->id)
             ->with('success', 'Évaluation créée avec succès ! Veuillez maintenant ajouter des questions.');
     }
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -201,6 +201,11 @@ class EvaluationController extends Controller
         return view('authenticated.owners.evaluations.show', compact('evaluation'));
     }
 
+    public function editQuestion(Question $question)
+    {
+        return view('authenticated.owners.evaluations.edit-question', compact('question'));
+    }
+
     /**
      * Met à jour une réponse existante.
      */
@@ -238,14 +243,14 @@ class EvaluationController extends Controller
                         ['answer_text' => 'Réponse B', 'is_correct' => false],
                         ['answer_text' => 'Réponse C', 'is_correct' => false],
                     ];
-                    
+
                     if ($newType === 'find_intruder') {
                         // Pour trouver l'intrus, la première réponse est l'intrus (is_correct = false)
                         $defaultAnswers[0]['is_correct'] = false;
                         $defaultAnswers[1]['is_correct'] = true;
                         $defaultAnswers[2]['is_correct'] = true;
                     }
-                    
+
                     foreach ($defaultAnswers as $answer) {
                         $question->answers()->create($answer);
                     }
@@ -320,9 +325,179 @@ class EvaluationController extends Controller
         }
     }
 
-// ===================================
-// MÉTHODES D'ÉDITION PAR ÉTAPES
-// ===================================
+    /**
+     * Dupliquer une question avec ses réponses
+     */
+    public function duplicateQuestion(Question $question)
+    {
+        try {
+            $newQuestion = $question->replicate();
+            $newQuestion->question_text = $question->question_text . ' (copie)';
+            $newQuestion->save();
+
+            // Dupliquer les réponses
+            foreach ($question->answers as $answer) {
+                $newAnswer = $answer->replicate();
+                $newAnswer->question_id = $newQuestion->id;
+                $newAnswer->save();
+            }
+
+            return response()->json(['success' => true, 'message' => 'Question dupliquée avec succès']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Supprimer une question et ses réponses
+     */
+    public function deleteQuestion(Question $question)
+    {
+        try {
+            // Supprimer les réponses d'abord
+            $question->answers()->delete();
+            // Supprimer la question
+            $question->delete();
+
+            return response()->json(['success' => true, 'message' => 'Question supprimée avec succès']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Basculer le statut correct/incorrect d'une réponse
+     */
+    public function toggleCorrectAnswer(Answer $answer)
+    {
+        try {
+            $answer->is_correct = !$answer->is_correct;
+            $answer->save();
+
+            return response()->json(['success' => true, 'message' => 'Statut mis à jour']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Supprimer une réponse
+     */
+    public function deleteAnswer(Answer $answer)
+    {
+        try {
+            $answer->delete();
+            return response()->json(['success' => true, 'message' => 'Réponse supprimée avec succès']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Mettre à jour le texte d'une réponse (AJAX)
+     */
+    public function updateAnswerText(Request $request, Answer $answer)
+    {
+        try {
+            $answer->answer_text = $request->input('text');
+            $answer->save();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Mettre à jour le statut correct d'une réponse (AJAX)
+     */
+    public function updateAnswerCorrect(Request $request, Answer $answer)
+    {
+        try {
+            $answer->is_correct = $request->input('is_correct');
+            $answer->save();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Mettre à jour l'explication d'une réponse (AJAX)
+     */
+    public function updateAnswerExplanation(Request $request, Answer $answer)
+    {
+        try {
+            $answer->explanation = $request->input('explanation');
+            $answer->save();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Ajouter une nouvelle réponse à une question
+     */
+    public function addAnswerToQuestion(Request $request, Question $question)
+    {
+        try {
+            $answer = new Answer();
+            $answer->question_id = $question->id;
+            $answer->answer_text = $request->input('text');
+            $answer->explanation = $request->input('explanation');
+            $answer->is_correct = $request->input('is_correct', false);
+            $answer->save();
+
+            return response()->json(['success' => true, 'message' => 'Réponse ajoutée avec succès']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Réinitialiser les réponses d'une question avec des réponses par défaut
+     */
+    public function resetQuestionAnswers(Question $question)
+    {
+        try {
+            // Supprimer les réponses existantes
+            $question->answers()->delete();
+
+            // Créer des réponses par défaut
+            $defaultAnswers = [
+                ['answer_text' => 'Réponse A', 'is_correct' => true, 'explanation' => null],
+                ['answer_text' => 'Réponse B', 'is_correct' => false, 'explanation' => null],
+                ['answer_text' => 'Réponse C', 'is_correct' => false, 'explanation' => null],
+            ];
+
+            if ($question->type === 'find_intruder') {
+                // Pour trouver l'intrus, la première réponse est l'intrus (is_correct = false)
+                $defaultAnswers[0]['is_correct'] = false;
+                $defaultAnswers[1]['is_correct'] = true;
+                $defaultAnswers[2]['is_correct'] = true;
+            }
+
+            foreach ($defaultAnswers as $answerData) {
+                $answer = new Answer();
+                $answer->question_id = $question->id;
+                $answer->answer_text = $answerData['answer_text'];
+                $answer->explanation = $answerData['explanation'];
+                $answer->is_correct = $answerData['is_correct'];
+                $answer->save();
+            }
+
+            return response()->json(['success' => true, 'message' => 'Réponses réinitialisées avec succès']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    // ===================================
+    // MÉTHODES D'ÉDITION PAR ÉTAPES
+    // ===================================
 
     // Étape 1 : Modifier le type d'évaluation
     public function editStep1(Evaluation $evaluation)
@@ -360,12 +535,12 @@ class EvaluationController extends Controller
 
         $modelType = session('evaluation_edit.new_model_type');
         $modelClass = $modelType;
-        
+
         // Récupérer tous les éléments pour ce type avec gestion spécifique pour les chapitres
         if ($modelType === 'App\Models\Chapter') {
             // Les chapitres n'ont pas de colonne description, seulement content
             $items = $modelClass::select('id', 'title')->paginate(10);
-            
+
             // Ajouter une description vide pour chaque chapitre pour éviter les erreurs dans la vue
             $items->getCollection()->transform(function ($item) {
                 $item->description = ''; // Initialiser avec une description vide
@@ -375,10 +550,10 @@ class EvaluationController extends Controller
             // Formations et cours ont une colonne description
             $items = $modelClass::select('id', 'title', 'description')->paginate(10);
         }
-        
+
         // Récupérer l'élément actuellement associé à l'évaluation
         $currentModelId = $evaluation->evaluatable_id;
-        
+
         return view('authenticated.owners.evaluations.edit-step-2', compact('evaluation', 'items', 'modelType', 'currentModelId'));
     }
 
@@ -406,7 +581,7 @@ class EvaluationController extends Controller
         $sessionData = session('evaluation_edit');
         $modelClass = $sessionData['new_model_type'];
         $model = $modelClass::findOrFail($sessionData['new_model_id']);
-        
+
         // Gérer spécifiquement les chapitres qui n'ont pas de description
         if ($sessionData['new_model_type'] === 'App\Models\Chapter') {
             // Ajouter une description vide si elle n'existe pas
@@ -414,14 +589,14 @@ class EvaluationController extends Controller
                 $model->description = ''; // Description vide pour les chapitres
             }
         }
-        
+
         return view('authenticated.owners.evaluations.edit-step-3', compact('evaluation', 'model', 'sessionData'));
     }
 
     public function updateStep3(Request $request, Evaluation $evaluation)
     {
         $sessionData = session('evaluation_edit');
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',

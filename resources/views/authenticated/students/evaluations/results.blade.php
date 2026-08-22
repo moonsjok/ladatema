@@ -1,5 +1,5 @@
 @extends('layouts.authenticated.students.index')
-@section('page-title', "Résultats - " . $evaluation->title)
+@section('page-title', 'Résultats - ' . $evaluation->title)
 
 @section('dashboard-content')
     <div class="container my-6">
@@ -19,7 +19,7 @@
                     <h4 class="text-danger mb-2">Évaluation non réussie</h4>
                     <p class="text-muted mb-4">Vous n'avez pas atteint le score requis</p>
                 @endif
-                
+
                 <div class="row justify-content-center mb-4">
                     <div class="col-md-3">
                         <div class="h2 mb-1">{{ $attempt->score }}/{{ $attempt->total_points }}</div>
@@ -30,12 +30,12 @@
                         <small class="text-muted">Pourcentage</small>
                     </div>
                     <div class="col-md-3">
-                        <div class="h2 mb-1">{{ $evaluation->passing_score ?? 60 }}   {!! $evaluation->scoring_mode == 'points' ? "<small>Points</small>" :" %" !!} </div>
+                        <div class="h2 mb-1">{{ $evaluation->passing_score ?? 60 }} {!! $evaluation->scoring_mode == 'points' ? '<small>Points</small>' : ' %' !!} </div>
                         <small class="text-muted">Score requis</small>
                     </div>
                     <div class="col-md-3">
                         <div class="h2 mb-1">
-                        {{-- @php
+                            {{-- @php
                             // S'assurer que le temps est positif pour le formatage
                             $timeForFormatting = max(0, $attempt->time_spent);
                             
@@ -44,21 +44,22 @@
                             $formattedTimeSpent = sprintf("%02d:%02d", $minutes, $seconds);
                         @endphp
                         {{  $formattedTimeSpent }}  --}}
-                        {{formateTime($attempt->time_spent)}}
-                        
+                            {{ formateTime($attempt->time_spent) }}
+
                         </div>
                         <small class="text-muted">Temps passé</small>
                     </div>
                 </div>
-                
+
                 <div class="d-flex justify-content-center gap-2">
-                    <a href="{{ route('student.evaluations.show', $evaluation) }}" 
-                       class="btn btn-outline-primary">
+                    <a href="{{ route('student.evaluations.show', $evaluation) }}" class="btn btn-outline-primary">
                         <i class="bi bi-arrow-left me-2"></i>Retour à l'évaluation
                     </a>
-                    @if (!$attempt->passed && (!$evaluation->max_attempts || $attempt->user->attempts()->where('evaluation_id', $evaluation->id)->count() < $evaluation->max_attempts))
-                        <a href="{{ route('student.evaluations.start', $evaluation) }}" 
-                           class="btn btn-primary">
+                    @if (
+                        !$attempt->passed &&
+                            (!$evaluation->max_attempts ||
+                                $attempt->user->attempts()->where('evaluation_id', $evaluation->id)->count() < $evaluation->max_attempts))
+                        <a href="{{ route('student.evaluations.start', $evaluation) }}" class="btn btn-primary">
                             <i class="bi bi-arrow-clockwise me-2"></i>Retenter
                         </a>
                     @endif
@@ -86,8 +87,16 @@
                                 <small class="text-muted">{{ $question->points }} points</small>
                             </div>
                             @php
-                                $studentAnswer = $attempt->studentAnswers()->where('question_id', $question->id)->first();
-                                $isCorrect = $studentAnswer && $studentAnswer->answer->is_correct;
+                                $studentAnswers = $attempt
+                                    ->studentAnswers()
+                                    ->where('question_id', $question->id)
+                                    ->get();
+                                $isCorrect = $studentAnswers->contains(function ($answer) {
+                                    return $answer->answer && $answer->answer->is_correct;
+                                });
+
+                                // Obtenir toutes les réponses de la question dans l'ordre
+$allAnswers = $question->answers()->orderBy('id')->get();
                             @endphp
                             <div class="ms-3">
                                 @if ($isCorrect)
@@ -101,14 +110,25 @@
                                 @endif
                             </div>
                         </div>
-                        
+
                         <div class="row mt-3">
                             <div class="col-md-6">
                                 <small class="text-muted d-block mb-2">Votre réponse:</small>
-                                @if ($studentAnswer)
-                                    <div class="p-2 border rounded @if ($isCorrect) border-success bg-light @else border-danger bg-light @endif">
-                                        {{ $studentAnswer->answer->answer_text }}
-                                    </div>
+                                @if ($studentAnswers->count() > 0)
+                                    @foreach ($studentAnswers as $studentAnswer)
+                                        @php
+                                            // Trouver l'index de la réponse dans toutes les réponses de la question
+                                            $answerIndex = $allAnswers->search(function ($answer) use ($studentAnswer) {
+                                                return $answer->id == $studentAnswer->answer_id;
+                                            });
+                                            $letter = chr(65 + $answerIndex); // A, B, C, D...
+                                        @endphp
+                                        <div
+                                            class="p-2 border rounded @if ($studentAnswer->answer && $studentAnswer->answer->is_correct) border-success bg-light @else border-danger bg-light @endif mb-2">
+                                            <strong>{{ $letter }})</strong>
+                                            {{ $studentAnswer->answer ? $studentAnswer->answer->answer_text : 'Réponse non trouvée' }}
+                                        </div>
+                                    @endforeach
                                 @else
                                     <div class="p-2 border rounded bg-secondary text-muted">
                                         Non répondue
@@ -120,14 +140,14 @@
                                 @php
                                     $correctAnswers = $question->answers()->where('is_correct', true)->get();
                                 @endphp
-                                
-                                @if($correctAnswers->count() > 0)
-                                    @foreach($correctAnswers as $index => $correctAnswer)
+
+                                @if ($correctAnswers->count() > 0)
+                                    @foreach ($correctAnswers as $index => $correctAnswer)
                                         <div class="p-2 border rounded border-success bg-light mb-2">
                                             <strong>{{ chr(65 + $index) }})</strong> {{ $correctAnswer->answer_text }}
                                         </div>
-                                        
-                                        @if($correctAnswer->explanation)
+
+                                        @if ($correctAnswer->explanation)
                                             <div class="mb-3">
                                                 <small class="text-muted d-block mb-1">Explication:</small>
                                                 <div class="p-2 border rounded border-info bg-light-blue">

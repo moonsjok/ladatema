@@ -26,7 +26,7 @@
             <div class="card-body">
                 <form action="{{ route('subscriptions.store') }}" method="POST">
                     @csrf
-                    
+
                     <div class="row">
                         <!-- Informations utilisateur -->
                         <div class="col-md-6">
@@ -119,7 +119,7 @@
                                     <i class="bi bi-currency-euro me-2 text-primary"></i>
                                     Prix (FCFA) *
                                 </label>
-                                <input type="number" class="form-control" id="price" name="price" 
+                                <input type="number" class="form-control" id="price" name="price"
                                        value="{{ old('price', 0) }}" min="0" step="1" required>
                                 <div class="form-text">
                                     Entrez le montant directement en FCFA
@@ -136,10 +136,10 @@
                                     <i class="bi bi-calendar me-2 text-primary"></i>
                                     Durée (en jours) *
                                 </label>
-                                <input type="number" class="form-control" id="duration_in_days" name="duration_in_days" 
-                                       value="{{ old('duration_in_days', 30) }}" min="1" max="365" required>
+                                <input type="number" class="form-control" id="duration_in_days" name="duration_in_days"
+                                       value="{{ old('duration_in_days', 90) }}" min="90" max="365" required>
                                 <div class="form-text">
-                                    Entre 1 et 365 jours
+                                    Minimum 90 jours (3 mois) — max 365 jours
                                 </div>
                             </div>
                         </div>
@@ -151,7 +151,7 @@
                                     <i class="bi bi-receipt me-2 text-primary"></i>
                                     Référence de paiement
                                 </label>
-                                <input type="text" class="form-control" id="payment_reference" name="payment_reference" 
+                                <input type="text" class="form-control" id="payment_reference" name="payment_reference"
                                        value="{{ old('payment_reference') }}" maxlength="255">
                                 <div class="form-text">
                                     Optionnel, pour les paiements externes
@@ -165,7 +165,7 @@
                         <div class="col-md-6">
                             <div class="mb-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_validated" name="is_validated" 
+                                    <input class="form-check-input" type="checkbox" id="is_validated" name="is_validated"
                                            value="1" {{ old('is_validated') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="is_validated">
                                         <i class="bi bi-check-circle me-2 text-success"></i>
@@ -195,12 +195,12 @@
     <script>
         function updateContentSelection() {
             const type = document.getElementById('type').value;
-            
+
             // Masquer tous les groupes
             document.getElementById('formation-group').style.display = 'none';
             document.getElementById('course-group').style.display = 'none';
             document.getElementById('chapter-group').style.display = 'none';
-            
+
             // Afficher le groupe correspondant
             if (type === 'formation') {
                 document.getElementById('formation-group').style.display = 'block';

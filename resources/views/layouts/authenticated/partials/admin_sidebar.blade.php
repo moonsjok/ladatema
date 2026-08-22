@@ -49,22 +49,22 @@
 
     <!-- Évaluations -->
     <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('evaluations.*') ? 'active-link' : '' }} toggle-menu"
-            href="#" data-bs-toggle="collapse" data-bs-target="#evaluationsSubmenu">
+        <a class="nav-link {{ request()->routeIs('evaluations.*') ? 'active-link' : '' }} toggle-menu" href="#"
+            data-bs-toggle="collapse" data-bs-target="#evaluationsSubmenu">
             <i class="bi bi-check-circle"></i> Évaluations
         </a>
         <div class="collapse {{ request()->routeIs('evaluations.*') ? 'show' : '' }}" id="evaluationsSubmenu">
             <ul class="nav flex-column sub-menu">
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('evaluations.index') ? 'active-link' : '' }}" 
-                       href="{{ route('evaluations.index') }}">
+                    <a class="nav-link {{ request()->routeIs('evaluations.index') ? 'active-link' : '' }}"
+                        href="{{ route('evaluations.index') }}">
                         <i class="bi bi-list-ul"></i> Les évaluations
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('attempts.index') ? 'active-link' : '' }}" 
-                       href="{{ route('attempts.index') }}">
-                        <i class="bi bi-envelope-plus"></i> Tentatives
+                    <a class="nav-link {{ request()->routeIs('attempts.*') ? 'active-link' : '' }}"
+                        href="{{ route('attempts.index') }}">
+                        <i class="bi bi-clipboard-data"></i>Les tentatives
                     </a>
                 </li>
             </ul>
@@ -73,33 +73,33 @@
 
     <!-- Médias -->
     <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('media.*') ? 'active-link' : '' }} toggle-menu"
-            href="#" data-bs-toggle="collapse" data-bs-target="#mediaSubmenu">
+        <a class="nav-link {{ request()->routeIs('media.*') ? 'active-link' : '' }} toggle-menu" href="#"
+            data-bs-toggle="collapse" data-bs-target="#mediaSubmenu">
             <i class="bi bi-images"></i> Médias
         </a>
         <div class="collapse {{ request()->routeIs('media.*') ? 'show' : '' }}" id="mediaSubmenu">
             <ul class="nav flex-column sub-menu">
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('media.index') && request()->route('type') == 'images' ? 'active-link' : '' }}" 
-                       href="{{ route('media.index', 'images') }}">
+                    <a class="nav-link {{ request()->routeIs('media.index') && request()->route('type') == 'images' ? 'active-link' : '' }}"
+                        href="{{ route('media.index', 'images') }}">
                         <i class="bi bi-image"></i> Images
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('media.index') && request()->route('type') == 'videos' ? 'active-link' : '' }}" 
-                       href="{{ route('media.index', 'videos') }}">
+                    <a class="nav-link {{ request()->routeIs('media.index') && request()->route('type') == 'videos' ? 'active-link' : '' }}"
+                        href="{{ route('media.index', 'videos') }}">
                         <i class="bi bi-play-circle"></i> Vidéos
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('media.index') && request()->route('type') == 'pdfs' ? 'active-link' : '' }}" 
-                       href="{{ route('media.index', 'pdfs') }}">
+                    <a class="nav-link {{ request()->routeIs('media.index') && request()->route('type') == 'pdfs' ? 'active-link' : '' }}"
+                        href="{{ route('media.index', 'pdfs') }}">
                         <i class="bi bi-file-pdf"></i> PDFs
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('media.index') && request()->route('type') == 'txt_files' ? 'active-link' : '' }}" 
-                       href="{{ route('media.index', 'txt_files') }}">
+                    <a class="nav-link {{ request()->routeIs('media.index') && request()->route('type') == 'txt_files' ? 'active-link' : '' }}"
+                        href="{{ route('media.index', 'txt_files') }}">
                         <i class="bi bi-file-text"></i> Textes
                     </a>
                 </li>
@@ -123,13 +123,21 @@
         </a>
     </li>
 
+    <!-- Notifications & Annonces -->
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('app-notifications.*') ? 'active-link' : '' }} toggle-menu"
+            href="{{ route('app-notifications.index') }}">
+            <i class="bi bi-bell-fill"></i> Notifications
+        </a>
+    </li>
+
     <!-- Bouton de déconnexion -->
     <div class="mt-auto">
 
         <a class="nav-item nav-link " href="{{ route('artisan-clear-cache') }}">
             <i class="bi bi-refresh"></i> Clear cache
         </a>
-    
+
         <a class="nav-item nav-link logout " href="{{ route('logout') }}"
             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
             <i class="bi bi-box-arrow-right"></i> Déconnexion

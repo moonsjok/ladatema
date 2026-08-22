@@ -138,9 +138,9 @@
                                     Durée (en jours) *
                                 </label>
                                 <input type="number" class="form-control" id="duration_in_days" name="duration_in_days" 
-                                       value="{{ old('duration_in_days', $subscription->duration_in_days) }}" min="1" max="365" required>
+                                       value="{{ old('duration_in_days', max(90, $subscription->duration_in_days ?? 90)) }}" min="90" max="365" required>
                                 <div class="form-text">
-                                    Entre 1 et 365 jours
+                                    Minimum 90 jours (3 mois) — max 365 jours
                                 </div>
                             </div>
                         </div>

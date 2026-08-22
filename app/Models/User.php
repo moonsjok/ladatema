@@ -12,12 +12,35 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 use App\Models\Subscription;
+use App\Notifications\CustomVerifyEmail;
 
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes, InteractsWithMedia;
 
+    /**
+     * Envoyez la notification de vérification de l'adresse e-mail personnalisée.
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new CustomVerifyEmail);
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Assigner le rôle 'student' par défaut aux nouveaux utilisateurs
+        static::creating(function ($user) {
+            if (empty($user->role)) {
+                $user->role = 'student';
+            }
+        });
+    }
 
     protected $table = "users";
 
@@ -57,6 +80,14 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Vérifie si l'utilisateur possède un rôle spécifique.
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
     }
 
 

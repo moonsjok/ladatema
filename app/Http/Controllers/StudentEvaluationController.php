@@ -20,13 +20,21 @@ class StudentEvaluationController extends Controller
     {
         $user = Auth::user();
         
-        // Récupérer toutes les formations auxquelles l'étudiant est souscrit
-        $subscriptions = $user->souscriptions()->with('formation')->get();
+        // Récupérer toutes les souscriptions actives et non expirées de l'étudiant
+        $subscriptions = $user->souscriptions()
+            ->where('is_validated', true)
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                      ->orWhere('expires_at', '>=', now());
+            })
+            ->with('formation')
+            ->get();
         
         $evaluations = collect();
         
         foreach ($subscriptions as $subscription) {
             $formation = $subscription->formation;
+            if (!$formation) continue;
             
             // Récupérer les évaluations de la formation
             $formationEvaluations = Evaluation::where('evaluatable_type', 'App\Models\Formation')
@@ -66,9 +74,14 @@ class StudentEvaluationController extends Controller
     {
         $user = Auth::user();
         
-        // Vérifier si l'étudiant a accès à cette évaluation
-        if (!$this->hasAccess($user, $evaluation)) {
+        $subscription = $this->getMatchingSubscription($user, $evaluation);
+        
+        if (!$subscription) {
             abort(403, 'Vous n\'avez pas accès à cette évaluation.');
+        }
+
+        if ($subscription->isExpired()) {
+            return redirect()->route('subscriptions.expired', $subscription->id);
         }
         
         // Vérifier les tentatives précédentes
@@ -87,9 +100,14 @@ class StudentEvaluationController extends Controller
     {
         $user = Auth::user();
         
-        // Vérifier si l'étudiant a accès à cette évaluation
-        if (!$this->hasAccess($user, $evaluation)) {
+        $subscription = $this->getMatchingSubscription($user, $evaluation);
+
+        if (!$subscription) {
             abort(403, 'Vous n\'avez pas accès à cette évaluation.');
+        }
+
+        if ($subscription->isExpired()) {
+            return redirect()->route('subscriptions.expired', $subscription->id);
         }
         
         // Vérifier le nombre de tentatives déjà effectuées
@@ -206,40 +224,51 @@ class StudentEvaluationController extends Controller
     }
     
     /**
+     * Obtenir la souscription correspondante de l'étudiant pour une évaluation
+     */
+    private function getMatchingSubscription($user, $evaluation)
+    {
+        $subscriptions = $user->souscriptions()->with(['formation.courses.chapters', 'course', 'chapter'])->latest()->get();
+        
+        foreach ($subscriptions as $subscription) {
+            $formation = $subscription->formation;
+
+            if ($evaluation->evaluatable_type === 'App\Models\Formation' && $formation && $evaluation->evaluatable_id === $formation->id) {
+                return $subscription;
+            }
+
+            if ($evaluation->evaluatable_type === 'App\Models\Course') {
+                if ($subscription->course_id === $evaluation->evaluatable_id) {
+                    return $subscription;
+                }
+                if ($formation && $formation->courses()->pluck('id')->contains($evaluation->evaluatable_id)) {
+                    return $subscription;
+                }
+            }
+
+            if ($evaluation->evaluatable_type === 'App\Models\Chapter') {
+                if ($subscription->chapter_id === $evaluation->evaluatable_id) {
+                    return $subscription;
+                }
+                if ($formation) {
+                    $chapterIds = $formation->courses()->with('chapters')->get()->flatMap(function($c) { return $c->chapters->pluck('id'); });
+                    if ($chapterIds->contains($evaluation->evaluatable_id)) {
+                        return $subscription;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Vérifier si l'étudiant a accès à l'évaluation
      */
     private function hasAccess($user, $evaluation)
     {
-        // Récupérer les formations souscrites par l'étudiant
-        $subscriptions = $user->souscriptions()->with('formation')->get();
-        
-        foreach ($subscriptions as $subscription) {
-            $formation = $subscription->formation;
-            
-            // Vérifier si l'évaluation est sur la formation
-            if ($evaluation->evaluatable_type === 'App\Models\Formation' && 
-                $evaluation->evaluatable_id === $formation->id) {
-                return true;
-            }
-            
-            // Vérifier si l'évaluation est sur un cours de la formation
-            if ($evaluation->evaluatable_type === 'App\Models\Course') {
-                $courseIds = $formation->courses()->pluck('id');
-                if ($courseIds->contains($evaluation->evaluatable_id)) {
-                    return true;
-                }
-            }
-            
-            // Vérifier si l'évaluation est sur un chapitre de la formation
-            if ($evaluation->evaluatable_type === 'App\Models\Chapter') {
-                $chapterIds = $formation->chapters()->pluck('id');
-                if ($chapterIds->contains($evaluation->evaluatable_id)) {
-                    return true;
-                }
-            }
-        }
-        
-        return false;
+        $sub = $this->getMatchingSubscription($user, $evaluation);
+        return $sub && $sub->is_validated && !$sub->isExpired();
     }
     
     /**

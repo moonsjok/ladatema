@@ -27,6 +27,8 @@ class Subscription extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'expires_at' => 'datetime',
+        'duration_in_days' => 'integer',
+        'is_validated' => 'boolean',
     ];
 
     protected static function boot()
@@ -34,11 +36,28 @@ class Subscription extends Model
         parent::boot();
 
         static::creating(function ($subscription) {
-            if (is_null($subscription->duration_in_days)) {
+            // Règle métier : Durée minimum de 90 jours (3 mois)
+            if (empty($subscription->duration_in_days) || (int)$subscription->duration_in_days < 90) {
                 $subscription->duration_in_days = 90;
             }
-            if (is_null($subscription->expires_at) && $subscription->duration_in_days) {
-                $subscription->expires_at = now()->addDays($subscription->duration_in_days);
+
+            // Calcul automatique de la date d'expiration sans muter la date de création
+            if (empty($subscription->expires_at)) {
+                $baseDate = $subscription->created_at ? (clone $subscription->created_at) : now();
+                $subscription->expires_at = (clone $baseDate)->addDays((int)$subscription->duration_in_days);
+            }
+        });
+
+        static::updating(function ($subscription) {
+            // Garantir 90 jours minimum en cas de mise à jour
+            if (!empty($subscription->duration_in_days) && (int)$subscription->duration_in_days < 90) {
+                $subscription->duration_in_days = 90;
+            }
+
+            // Calculer/recalculer la date d'expiration de manière sécurisée si nécessaire
+            if (empty($subscription->expires_at) || $subscription->isDirty('duration_in_days')) {
+                $baseDate = $subscription->created_at ? (clone $subscription->created_at) : now();
+                $subscription->expires_at = (clone $baseDate)->addDays((int)($subscription->duration_in_days ?? 90));
             }
         });
     }
@@ -71,18 +90,17 @@ class Subscription extends Model
         if (!$this->expires_at) {
             return false;
         }
-        
+
         try {
             // Validation et conversion sécurisée de la date d'expiration
             $expiresAt = $this->expires_at;
             if (is_string($expiresAt)) {
                 $expiresAt = \Carbon\Carbon::parse($expiresAt);
             }
-            
+
             return $expiresAt->isPast();
-            
+
         } catch (\Exception $e) {
-            // En cas d'erreur de parsing, considérer comme expiré par sécurité
             \Log::error('Erreur de vérification expiration: ' . $e->getMessage(), [
                 'subscription_id' => $this->id,
                 'expires_at' => $this->expires_at
@@ -96,7 +114,7 @@ class Subscription extends Model
      */
     public function isActive()
     {
-        return $this->is_validated && !$this->isExpired();
+        return (bool)$this->is_validated && !$this->isExpired();
     }
 
     /**
@@ -107,40 +125,31 @@ class Subscription extends Model
         if (!$this->expires_at) {
             return null;
         }
-        
+
         try {
-            // Validation et conversion sécurisée de la date d'expiration
             $expiresAt = $this->expires_at;
             if (is_string($expiresAt)) {
                 $expiresAt = \Carbon\Carbon::parse($expiresAt);
             }
-            
-            // Validation et conversion de la date actuelle
+
             $now = now();
-            
-            // Calculer la différence en jours et heures
-            $diff = $now->diff($expiresAt);
-            
-            // Si la souscription est expirée, retourner 0
             if ($expiresAt->isPast()) {
                 return 0;
             }
-            
-            // Si plus de 365 jours, afficher en jours uniquement
+
+            $diff = $now->diff($expiresAt);
+
             if ($diff->days >= 365) {
                 return round($diff->days) . ' jours';
             }
-            
-            // Si plus d'un jour, afficher en jours et heures
+
             if ($diff->days > 0) {
                 return round($diff->days) . ' jours, ' . $diff->h . 'h';
             }
-            
-            // Si moins d'un jour, afficher en heures uniquement
+
             return $diff->h . 'h';
-            
+
         } catch (\Exception $e) {
-            // En cas d'erreur de parsing, retourner une valeur par défaut
             \Log::error('Erreur de calcul temps restant: ' . $e->getMessage(), [
                 'subscription_id' => $this->id,
                 'expires_at' => $this->expires_at
@@ -150,40 +159,37 @@ class Subscription extends Model
     }
 
     /**
-     * Calculer la date d'expiration basée sur la durée
+     * Calculer et enregistrer la date d'expiration basée sur la durée (minimum 90 jours)
      */
     public function calculateExpirationDate()
     {
-        if ($this->duration_in_days) {
-            $this->expires_at = now()->addDays($this->duration_in_days);
-            $this->save();
-        }
+        $duration = max(90, (int)($this->duration_in_days ?? 90));
+        $this->duration_in_days = $duration;
+        $baseDate = $this->created_at ? (clone $this->created_at) : now();
+        $this->expires_at = (clone $baseDate)->addDays($duration);
+        $this->save();
     }
 
     /**
-     * Étendre la souscription
+     * Étendre la souscription de X jours supplémentaires sans erreur
      */
     public function extend(int $days)
     {
+        $additionalDays = max(1, $days);
+
         if ($this->expires_at) {
-            // Gérer le cas où expires_at est une chaîne de caractères
-            if (is_string($this->expires_at)) {
-                $currentExpiresAt = \Carbon\Carbon::parse($this->expires_at);
-            } else {
-                $currentExpiresAt = $this->expires_at;
-            }
-            $this->expires_at = $currentExpiresAt->addDays($days);
+            $currentExpiresAt = is_string($this->expires_at)
+                ? \Carbon\Carbon::parse($this->expires_at)
+                : (clone $this->expires_at);
+
+            $this->expires_at = (clone $currentExpiresAt)->addDays($additionalDays);
         } else {
-            $this->expires_at = now()->addDays($days);
+            $this->expires_at = now()->addDays(max(90, $additionalDays));
         }
-        
-        // Mettre à jour la durée totale depuis la création, toujours positive
-        if ($this->created_at) {
-            $this->duration_in_days = max(1, $this->created_at->diffInDays($this->expires_at));
-        } else {
-            $this->duration_in_days = max(1, now()->diffInDays($this->expires_at));
-        }
-        
+
+        $baseDate = $this->created_at ? (clone $this->created_at) : now();
+        $this->duration_in_days = max(90, (int)$baseDate->diffInDays($this->expires_at));
+
         $this->save();
     }
 }

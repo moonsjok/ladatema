@@ -14,6 +14,7 @@ use Spatie\MediaLibrary\Conversions\Conversion;
 use Spatie\MediaLibrary\Downloaders\DefaultDownloader;
 use Spatie\MediaLibrary\Enums\CollectionPosition;
 use Spatie\MediaLibrary\MediaCollections\Events\CollectionHasBeenClearedEvent;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileCannotBeAdded;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\InvalidBase64Data;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\InvalidUrl;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\MediaCannotBeDeleted;
@@ -30,6 +31,8 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * @template TMedia of \Spatie\MediaLibrary\MediaCollections\Models\Media = \Spatie\MediaLibrary\MediaCollections\Models\Media
+ *
+ * @phpstan-ignore trait.unused
  */
 trait InteractsWithMedia
 {
@@ -56,7 +59,7 @@ trait InteractsWithMedia
                 }
             }
 
-            $model->media()->cursor()->each(fn (Media $media) => $media->delete());
+            $model->deleteAllMedia();
         });
     }
 
@@ -144,7 +147,7 @@ trait InteractsWithMedia
      *
      * @return FileAdder<TMedia>
      *
-     * @throws \Spatie\MediaLibrary\MediaCollections\Exceptions\FileCannotBeAdded
+     * @throws FileCannotBeAdded
      */
     public function addMediaFromUrl(string $url, array|string ...$allowedMimeTypes): FileAdder
     {
@@ -156,8 +159,7 @@ trait InteractsWithMedia
         $temporaryFile = (new $downloader)->getTempFile($url);
         $this->guardAgainstInvalidMimeType($temporaryFile, $allowedMimeTypes);
 
-        $filename = basename(parse_url($url, PHP_URL_PATH));
-        $filename = urldecode($filename);
+        $filename = basename(urldecode((string) parse_url($url, PHP_URL_PATH)));
 
         if ($filename === '') {
             $filename = 'file';
@@ -198,7 +200,7 @@ trait InteractsWithMedia
      *
      * @return FileAdder<TMedia>
      *
-     * @throws \Spatie\MediaLibrary\MediaCollections\Exceptions\FileCannotBeAdded
+     * @throws FileCannotBeAdded
      * @throws InvalidBase64Data
      */
     public function addMediaFromBase64(string $base64data, array|string ...$allowedMimeTypes): FileAdder
@@ -581,7 +583,7 @@ trait InteractsWithMedia
      * Delete the associated media with the given id.
      * You may also pass a media object.
      *
-     * @throws \Spatie\MediaLibrary\MediaCollections\Exceptions\MediaCannotBeDeleted
+     * @throws MediaCannotBeDeleted
      */
     public function deleteMedia(int|string|Media $mediaId): void
     {
@@ -681,6 +683,16 @@ trait InteractsWithMedia
         if ($validation->fails()) {
             throw MimeTypeNotAllowed::create($file, $allowedMimeTypes);
         }
+    }
+
+    public function deleteAllMedia(): self
+    {
+        $this
+            ->media()
+            ->cursor()
+            ->each(fn (Media $media) => $media->delete());
+
+        return $this;
     }
 
     public function registerMediaConversions(?Media $media = null): void {}

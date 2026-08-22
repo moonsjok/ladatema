@@ -29,50 +29,33 @@ return new class extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            // Vérifier si les index existent avant de les supprimer
-            try {
-                $table->dropIndex('users_prenoms_index');
-            } catch (\Exception $e) {
-                // L'index n'existe pas, on continue
-            }
-            
-            try {
-                $table->dropIndex('users_nom_index');
-            } catch (\Exception $e) {
-                // L'index n'existe pas, on continue
-            }
-            
-            try {
-                $table->dropIndex('users_email_index');
-            } catch (\Exception $e) {
-                // L'index n'existe pas, on continue
-            }
-            
-            try {
-                $table->dropIndex('users_phone_call_index');
-            } catch (\Exception $e) {
-                // L'index n'existe pas, on continue
+            // Supprimer les index seulement s'ils existent
+            $indexes = [
+                'users_prenoms_index',
+                'users_nom_index',
+                'users_email_index',
+                'users_phone_call_index'
+            ];
+
+            foreach ($indexes as $index) {
+                if (Schema::hasIndex('users', $index)) {
+                    $table->dropIndex($index);
+                }
             }
         });
 
         Schema::table('subscriptions', function (Blueprint $table) {
-            // Vérifier si les index existent avant de les supprimer
-            try {
-                $table->dropIndex('subscriptions_payment_reference_index');
-            } catch (\Exception $e) {
-                // L'index n'existe pas, on continue
-            }
-            
-            try {
-                $table->dropIndex('subscriptions_created_at_index');
-            } catch (\Exception $e) {
-                // L'index n'existe pas, on continue
-            }
-            
-            try {
-                $table->dropIndex('subscriptions_user_id_index');
-            } catch (\Exception $e) {
-                // L'index n'existe pas, on continue
+            // Supprimer les index seulement s'ils existent
+            $indexes = [
+                'subscriptions_payment_reference_index',
+                'subscriptions_created_at_index',
+                'subscriptions_user_id_index'
+            ];
+
+            foreach ($indexes as $index) {
+                if (Schema::hasIndex('subscriptions', $index)) {
+                    $table->dropIndex($index);
+                }
             }
         });
     }

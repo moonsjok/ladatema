@@ -14,17 +14,34 @@
                     </div>
                     <div class="card-body">
                         @if($evaluations->isEmpty())
-                            <div class="text-center py-5">
-                                <i class="bi bi-inbox fa-4x text-muted mb-3"></i>
-                                <h5 class="text-muted">Aucune évaluation disponible</h5>
-                                <p class="text-muted">
-                                    Vous n'avez pas encore accès à des évaluations. 
-                                    Souscrivez à des formations pour débloquer des évaluations.
+                            <div class="text-center py-5 px-3">
+                                <div class="mb-3">
+                                    <i class="bi bi-journal-x display-3 text-warning"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-2">Aucune évaluation disponible</h4>
+                                <p class="text-muted mx-auto" style="max-width: 550px;">
+                                    Vous n'avez actuellement aucune évaluation active. Cela peut être dû au fait que vous n'avez pas encore de souscription validée ou que votre souscription précédente a expiré.
                                 </p>
-                                <a href="{{ route('student.formations.index') }}" class="btn btn-primary">
-                                    <i class="bi bi-book me-2"></i>
-                                    Voir les formations
-                                </a>
+                                
+                                <div class="alert alert-info border-0 shadow-sm max-w-600 mx-auto my-4 text-start p-3 rounded-3" style="max-width: 600px;">
+                                    <h6 class="fw-bold mb-2"><i class="bi bi-info-circle-fill me-2"></i> Directives à suivre :</h6>
+                                    <ul class="mb-0 ps-3 small">
+                                        <li class="mb-1"><strong>Nouvel apprenant :</strong> Choisissez une formation dans le catalogue pour débloquer ses cours et évaluations.</li>
+                                        <li><strong>Souscription expirée :</strong> Demandez une prolongation d'accès auprès de l'administration pour réactiver vos évaluations.</li>
+                                    </ul>
+                                </div>
+
+                                <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                                    <a href="{{ route('guest.formationsList') }}" class="btn btn-primary px-4">
+                                        <i class="bi bi-journal-album me-2"></i> Parcourir le catalogue
+                                    </a>
+                                    <a href="https://wa.me/22892980842?text={{ rawurlencode('Bonjour Ladatema, je souhaite prolonger ma souscription pour accéder aux évaluations.') }}" target="_blank" class="btn btn-success px-4">
+                                        <i class="bi bi-whatsapp me-2"></i> Demander une prolongation
+                                    </a>
+                                    <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary px-4">
+                                        <i class="bi bi-speedometer2 me-2"></i> Mon Tableau de Bord
+                                    </a>
+                                </div>
                             </div>
                         @else
                             <div class="row">

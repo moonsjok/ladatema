@@ -150,11 +150,34 @@
                             </div>
                         @endif
 
+                        <!-- Indicateur de progression -->
+                        <div id="uploadProgress" style="display: none;" class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                                <span class="fw-bold">Téléversement en cours...</span>
+                                <span id="progressPercent" class="ms-auto text-primary">0%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div id="progressBar"
+                                    class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                    role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0"
+                                    aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <span id="uploadStatus">Préparation du téléversement...</span>
+                                </small>
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('media.index', $type) }}" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Annuler
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" id="uploadBtn" class="btn btn-primary">
                                 <i class="fas fa-upload"></i>
                                 Uploader le fichier
                             </button>
@@ -262,4 +285,108 @@
             });
         </script>
     @endif
+
+    <!-- Script pour l'indicateur de progression -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form[method="POST"]');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const uploadStatus = document.getElementById('uploadStatus');
+
+            if (form && uploadBtn) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    // Désactiver le bouton et montrer la progression
+                    uploadBtn.disabled = true;
+                    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Téléversement...';
+                    uploadProgress.style.display = 'block';
+
+                    // Créer FormData pour l'upload
+                    const formData = new FormData(form);
+
+                    // Créer XMLHttpRequest pour suivre la progression
+                    const xhr = new XMLHttpRequest();
+
+                    // Suivre la progression
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable) {
+                            const percentComplete = Math.round((e.loaded / e.total) * 100);
+                            progressBar.style.width = percentComplete + '%';
+                            progressBar.setAttribute('aria-valuenow', percentComplete);
+                            progressPercent.textContent = percentComplete + '%';
+
+                            // Mettre à jour le statut
+                            if (percentComplete < 25) {
+                                uploadStatus.textContent = 'Démarrage du téléversement...';
+                            } else if (percentComplete < 50) {
+                                uploadStatus.textContent = 'Téléversement en cours...';
+                            } else if (percentComplete < 75) {
+                                uploadStatus.textContent = 'Téléversement presque terminé...';
+                            } else if (percentComplete < 100) {
+                                uploadStatus.textContent = 'Finalisation du téléversement...';
+                            } else {
+                                uploadStatus.textContent =
+                                    'Traitement du fichier sur le serveur...';
+                            }
+                        }
+                    });
+
+                    // Gérer la fin du téléversement
+                    xhr.addEventListener('load', function() {
+                        if (xhr.status === 200) {
+                            uploadStatus.textContent = 'Téléversement réussi! Redirection...';
+                            progressBar.classList.remove('progress-bar-animated');
+                            progressBar.classList.add('bg-success');
+
+                            // Rediriger vers la page de succès
+                            setTimeout(() => {
+                                window.location.href = xhr.responseURL ||
+                                    '{{ route('media.index', $type) }}';
+                            }, 1000);
+                        } else {
+                            // Erreur
+                            uploadStatus.textContent = 'Erreur lors du téléversement';
+                            progressBar.classList.remove('progress-bar-animated');
+                            progressBar.classList.add('bg-danger');
+                            uploadBtn.disabled = false;
+                            uploadBtn.innerHTML =
+                                '<i class="fas fa-upload"></i> Uploader le fichier';
+
+                            // Afficher le message d'erreur
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'alert alert-danger mt-3';
+                            errorDiv.innerHTML =
+                                '<i class="fas fa-exclamation-triangle"></i> Erreur lors du téléversement. Veuillez réessayer.';
+                            form.appendChild(errorDiv);
+                        }
+                    });
+
+                    // Gérer les erreurs réseau
+                    xhr.addEventListener('error', function() {
+                        uploadStatus.textContent = 'Erreur réseau';
+                        progressBar.classList.remove('progress-bar-animated');
+                        progressBar.classList.add('bg-danger');
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Uploader le fichier';
+                    });
+
+                    // Envoyer la requête
+                    xhr.open('POST', form.action);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+                    // Ajouter le token CSRF
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                    if (csrfToken) {
+                        xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken.getAttribute('content'));
+                    }
+
+                    xhr.send(formData);
+                });
+            }
+        });
+    </script>
 @endpush

@@ -1,2 +1,26 @@
 .env
+.env.dusk.local
+.env.r2.production
 node_modules
+.phpunit.cache/
+bootstrap/cache/*.tmp
+bootstrap/cache/packages.php
+bootstrap/cache/services.php
+media_export_*.json
+/check_*.php
+/test_*.php
+/debug_*.php
+/fix_*.php
+/sync_media_*.php
+/import_media_*.php
+/analyze_attempt_structure.php
+/date_format_validator.php
+/secure_date_calculations.php
+/setup_r2_env.php
+/terminal_time_check.php
+/tinker_time_check.php
+/update_r2_url.php
+/*.sql
+* copy.php
+user.ini
+php.ini.recommended

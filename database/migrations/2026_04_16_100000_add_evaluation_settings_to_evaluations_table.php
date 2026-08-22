@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('scoring_mode', ['pourcentage', 'points'])->default('pourcentage')->comment('Mode de notation : pourcentage ou points');
             $table->integer('passing_score')->default(60)->nullable()->comment('Score minimum pour réussir (en % ou points selon le mode)');
             $table->integer('max_attempts')->nullable()->comment('Nombre maximum de tentatives autorisées');
-            });
+        });
     }
 
     /**

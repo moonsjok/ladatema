@@ -38,7 +38,7 @@
 
     <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @if(app()->environment('local'))
+        @if (app()->environment('local'))
             <!-- Développement : utiliser HTTP localhost -->
             <script type="module" src="http://localhost:5173/@vite/client"></script>
             <script type="module" src="http://localhost:5173/resources/js/app.js"></script>

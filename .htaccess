@@ -1,0 +1,46 @@
+# Configuration PHP pour les uploads de fichiers volumineux
+# Augmenter les limites pour supporter les vidéos jusqu'à 2GB
+
+<IfModule mod_php.c>
+    php_value upload_max_filesize 2G
+    php_value post_max_size 2.5G
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 512M
+    php_value max_file_uploads 20
+</IfModule>
+
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 2G
+    php_value post_max_size 2.5G
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 512M
+    php_value max_file_uploads 20
+</IfModule>
+
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 2G
+    php_value post_max_size 2.5G
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 512M
+    php_value max_file_uploads 20
+</IfModule>
+
+# Configuration pour les serveurs avec CGI/FastCGI
+<IfModule mod_cgi.c>
+    Options +FollowSymLinks
+</IfModule>
+
+# Augmenter le timeout pour les uploads longs
+<IfModule mod_reqtimeout.c>
+    RequestReadTimeout header=20-40,MinRate=500 body=20,MinRate=500
+</IfModule>
+
+# Configuration pour les gros fichiers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>

@@ -63,6 +63,13 @@ class RegisterController extends Controller
         // Fire Registered event to send email verification notification
         event(new Registered($user));
 
+        // Envoi du mail de bienvenue
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeUserMail($user));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Échec de l\'envoi du mail de bienvenue : ' . $e->getMessage());
+        }
+
         // Redirect to email verification notice page
         return redirect()->route('verification.notice')->with('success', 'Inscription réussie. Veuillez vérifier votre email pour activer votre compte.');
     }
