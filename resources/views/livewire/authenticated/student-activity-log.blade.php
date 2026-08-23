@@ -34,8 +34,8 @@
                         </div>
 
                         <!-- Ligne 3: Description -->
-                        <div class="small text-secondary mb-2">
-                            {{ $log['description'] }}
+                        <div class="small text-secondary mb-2" style="text-align: justify; line-height: 1.5;">
+                            {!! $log['description'] !!}
                         </div>
 
                         <!-- Ligne 4: Date -->

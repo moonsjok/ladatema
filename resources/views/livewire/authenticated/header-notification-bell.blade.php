@@ -35,7 +35,7 @@
         </div>
 
         <!-- Liste des notifications -->
-        <div class="list-group list-group-flush overflow-y-auto" style="max-height: 360px;">
+        <div class="list-group list-group-flush overflow-y-auto" style="max-height: 420px;">
             @if($notifications->isEmpty())
                 <div class="text-center py-4 text-muted">
                     <i class="bi bi-inbox fs-3 d-block mb-1 text-secondary"></i>
@@ -43,38 +43,65 @@
                 </div>
             @else
                 @foreach($notifications as $notif)
-                    <div class="list-group-item p-3 border-bottom {{ $notif->is_read ? 'bg-white' : 'bg-primary-subtle border-start border-3 border-primary' }}">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <div class="fw-bold text-dark small text-truncate pe-2" style="max-width: 220px;">
-                                @if($notif->is_important)
-                                    <span class="badge bg-danger me-1" style="font-size: 0.65rem;">Important</span>
-                                @endif
-                                {!! $notif->title !!}
+                    <div class="list-group-item p-3 border-bottom {{ $notif->is_read ? 'bg-white' : 'bg-primary-subtle border-start border-4 border-primary' }}">
+                        <!-- Ligne 1 : Icône sur sa propre ligne -->
+                        <div class="mb-1.5">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center shadow-xs" 
+                                 style="width: 34px; height: 34px; background: {{ $notif->is_important ? '#fee2e2' : '#e8f0fe' }}; color: {{ $notif->is_important ? '#dc2626' : '#1a73e8' }};">
+                                <i class="bi {{ $notif->is_important ? 'bi-shield-exclamation' : 'bi-megaphone-fill' }} fs-6"></i>
                             </div>
-                            <span class="text-muted opacity-75" style="font-size: 0.72rem;">
-                                {{ $notif->created_at->diffForHumans() }}
-                            </span>
                         </div>
 
-                        <p class="small text-secondary mb-2 text-break" style="font-size: 0.82rem; line-height: 1.4; white-space: pre-line;">
-                            {!! $notif->message !!}
-                        </p>
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted" style="font-size: 0.72rem;">
-                                <i class="bi bi-person me-1"></i> {{ $notif->sender->name ?? 'Admin' }}
+                        <!-- Ligne 2 : Importance sur la seconde ligne -->
+                        <div class="mb-1.5">
+                            <span class="badge bg-{{ $notif->is_important ? 'danger' : 'primary' }} px-2 py-0.5 rounded-pill" style="font-size: 0.68rem; letter-spacing: 0.5px;">
+                                {{ $notif->is_important ? 'URGENT' : 'ANNONCE' }}
                             </span>
-
-                            @if(!$notif->is_read)
-                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" style="font-size: 0.72rem;" wire:click="markAsRead({{ $notif->id }})">
-                                    <i class="bi bi-check-lg me-0.5"></i> Lu
-                                </button>
-                            @else
-                                <span class="badge bg-light text-secondary border px-2 py-0.5" style="font-size: 0.7rem;">
+                            @if($notif->is_read)
+                                <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5 ms-1" style="font-size: 0.65rem;">
                                     <i class="bi bi-check2-all text-success me-0.5"></i> Déjà lu
                                 </span>
                             @endif
                         </div>
+
+                        <!-- Ligne 3 : Titre sur la troisième ligne -->
+                        <div class="mb-1.5">
+                            <div class="fw-bold text-dark small" style="font-size: 0.9rem;">
+                                {!! $notif->title !!}
+                            </div>
+                        </div>
+
+                        <!-- Ligne 4 : Message Justifié -->
+                        <div class="small text-secondary mb-2" style="font-size: 0.82rem; line-height: 1.5; white-space: pre-line; text-align: justify; color: #374151;">
+                            {!! $notif->message !!}
+                        </div>
+
+                        <!-- Ligne 5 : Date et heure de publication -->
+                        <div class="small text-muted mb-1" style="font-size: 0.75rem;">
+                            <i class="bi bi-calendar-event me-1 text-primary"></i>
+                            <strong>Date & heure :</strong> {{ $notif->created_at->format('d/m/Y à H:i') }}
+                        </div>
+
+                        <!-- Ligne 6 : Temps écoulé -->
+                        <div class="small text-muted mb-1" style="font-size: 0.75rem;">
+                            <i class="bi bi-clock-history me-1 text-primary"></i>
+                            <strong>Temps écoulé :</strong> {{ $notif->created_at->diffForHumans() }}
+                        </div>
+
+                        <!-- Ligne 7 : Expéditeur -->
+                        <div class="small text-muted mb-2" style="font-size: 0.75rem;">
+                            <i class="bi bi-person-circle me-1 text-primary"></i>
+                            <strong>Expéditeur :</strong> {{ $notif->sender->name ?? 'Administration' }}
+                        </div>
+
+                        <!-- Ligne 8 : Bouton d'action sur une nouvelle ligne -->
+                        @if(!$notif->is_read)
+                            <div>
+                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.75rem;" wire:click="markAsRead({{ $notif->id }})">
+                                    <i class="bi bi-check-lg me-1"></i> Marquer comme lu
+                                </button>
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             @endif
