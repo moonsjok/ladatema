@@ -39,7 +39,7 @@ class AppNotificationController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('authenticated.notifications.index', compact('users', 'notifications', 'authUser'));
+        return view('authenticated.owners.notifications.index', compact('users', 'notifications', 'authUser'));
     }
 
     /**
