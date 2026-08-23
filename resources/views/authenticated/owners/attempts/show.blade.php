@@ -42,6 +42,54 @@
         .stat-card:hover {
             transform: translateY(-3px);
         }
+
+        /* --- CSS D'IMPRESSION DÉDIÉ (Seule la zone d'évaluation est imprimée) --- */
+        @media print {
+            /* Cacher tout ce qui est en dehors de la zone d'impression */
+            body * {
+                visibility: hidden !important;
+            }
+            .sidebar, nav, header, footer, .btn, .no-print-btn, .navbar, aside {
+                display: none !important;
+            }
+
+            /* Rendre visible uniquement la zone d'évaluation */
+            #printable-area, #printable-area * {
+                visibility: visible !important;
+            }
+
+            #printable-area {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 10px !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                box-shadow: none !important;
+            }
+
+            /* Optimisations de rendu pour la mise en page imprimée */
+            .card {
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                background: #ffffff !important;
+            }
+
+            .question-card {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                margin-bottom: 1rem !important;
+            }
+
+            .badge {
+                border: 1px solid #94a3b8 !important;
+                color: #000000 !important;
+            }
+        }
     </style>
 @endpush
 
@@ -54,7 +102,7 @@
 @endpush
 
 @section('dashboard-content')
-<div class="container-fluid py-3">
+<div class="container-fluid py-3" id="printable-area">
     <!-- En-tête avec actions -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
@@ -66,12 +114,12 @@
                 Soumise le {{ $attempt->created_at ? $attempt->created_at->format('d/m/Y à H:i') : 'N/A' }}
             </p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 no-print-btn">
             <a href="{{ route('attempts.index') }}" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold">
                 <i class="bi bi-arrow-left me-1"></i> Retour à la liste
             </a>
             <button onclick="printResults()" class="btn btn-outline-primary rounded-pill px-3 fw-semibold">
-                <i class="bi bi-printer me-1"></i> Imprimer
+                <i class="bi bi-printer me-1"></i> Imprimer la fiche
             </button>
         </div>
     </div>
@@ -196,13 +244,13 @@
                     <p class="text-secondary small mb-3">{{ $attempt->evaluation->description ?? 'Aucune description.' }}</p>
                     
                     <div class="row pt-2 border-top g-2 small">
-                        <div class="col-6">
+                        <div class="col-12">
                             <span class="text-muted d-block">Support / Module :</span>
                             <span class="badge bg-primary-subtle text-primary border rounded-pill px-2.5 py-1">
                                 {{ $attempt->evaluation->evaluatable->title ?? 'Évaluation' }}
                             </span>
                         </div>
-                        <div class="col-6">
+                        <div class="col-12">
                             <span class="text-muted d-block">Questions :</span>
                             <strong>{{ $stats['total_questions'] }} questions</strong>
                         </div>
