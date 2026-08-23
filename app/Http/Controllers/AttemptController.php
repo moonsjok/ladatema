@@ -146,6 +146,19 @@ class AttemptController extends Controller
      */
     public function destroy(Attempt $attempt)
     {
-        //
+        $user = auth()->user();
+        if (!$user || !in_array($user->role, ['dev', 'owner'])) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        try {
+            $attempt->studentAnswers()->delete();
+            $attempt->delete();
+
+            return redirect()->route('attempts.index')
+                ->with('success', 'La tentative d\'évaluation a été supprimée avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression de la tentative.');
+        }
     }
 }
