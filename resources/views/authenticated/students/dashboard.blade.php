@@ -64,9 +64,11 @@
                     <h2 class="fw-bold mb-0">
                         <i class="bi bi-mortarboard-fill text-primary me-2"></i> Mes Formations & Souscriptions
                     </h2>
-                    <a href="{{ route('guest.formationsList') }}" class="btn btn-sm btn-outline-primary fw-semibold">
-                        <i class="bi bi-plus-circle me-1"></i> Nouvelle souscription
-                    </a>
+<a href="{{ route('guest.formationsList') }}"
+   class="btn btn-sm btn-outline-primary fw-semibold">
+    <i class="bi bi-plus-circle me-1"></i>
+    <span class="d-none d-sm-inline">Nouvelle souscription</span>
+</a>
                 </div>
 
                 @if ($formations->isEmpty() && (!isset($expiredSubscriptions) || $expiredSubscriptions->isEmpty()))
@@ -198,7 +200,7 @@
                     @if(isset($expiredSubscriptions) && !$expiredSubscriptions->isEmpty())
                         <div class="mt-4">
                             <h5 class="fw-bold text-danger mb-3">
-                                <i class="bi bi-clock-history me-2"></i> Souscriptions Expirées ou En Attente
+                                <i class="bi bi-clock-history me-2"></i> <!--Souscriptions--> Expirées ou En Attente
                             </h5>
                             <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
                                 <div class="list-group list-group-flush">
@@ -252,47 +254,7 @@
 
             <!-- Colonne Latérale : Journal des Activités de l'Étudiant -->
             <div class="col-md-4 p-3">
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-header bg-primary text-white py-3 rounded-top-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="fw-bold mb-0">
-                                <i class="bi bi-activity me-2"></i> Journal des Activités
-                            </h5>
-                            <!-- <span class="badge bg-white text-primary rounded-pill">Récent</span> -->
-                        </div>
-                    </div>
-                    <div class="card-body p-3" style="max-height: 650px; overflow-y: auto;">
-                        @if(isset($activityLog) && !$activityLog->isEmpty())
-                            <div class="timeline">
-                                @foreach($activityLog as $log)
-                                    <div class="d-flex mb-3 pb-3 border-bottom">
-                                        <div class="me-3">
-                                            <span class="btn btn-sm btn-{{ $log['color'] }} rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
-                                                <i class="bi {{ $log['icon'] }} fs-6"></i>
-                                            </span>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <h6 class="fw-bold mb-1 text-dark fs-6">{{ $log['title'] }}</h6>
-                                                <small class="text-muted" style="font-size: 0.75rem;">
-                                                    @if(isset($log['date']))
-                                                        {{ is_string($log['date']) ? \Carbon\Carbon::parse($log['date'])->diffForHumans() : $log['date']->diffForHumans() }}
-                                                    @endif
-                                                </small>
-                                            </div>
-                                            <p class="small text-secondary mb-0">{{ $log['description'] }}</p>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-center py-4 text-muted">
-                                <i class="bi bi-clock-history fs-2 d-block mb-2"></i>
-                                <p class="mb-0 small">Aucune activité enregistrée pour le moment.</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
+                @livewire('authenticated.student-activity-log')
             </div>
         </div>
     </div>
