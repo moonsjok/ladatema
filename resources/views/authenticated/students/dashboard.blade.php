@@ -103,22 +103,27 @@
                                                 <button class="accordion-button collapsed py-3" type="button"
                                                     data-bs-toggle="collapse" data-bs-target="#collapse{{ $formation->id }}"
                                                     aria-expanded="false" aria-controls="collapse{{ $formation->id }}">
-                                                    <i class="bi bi-book-fill text-primary fs-5 me-3"></i>
-                                                    <span class="fw-bold me-auto">{{ $formation->title }}</span>
-                                                    
-                                                    @if($sub && $sub->expires_at)
-                                                        <span class="badge bg-success me-3 py-2 px-3 fw-normal">
-                                                            <i class="bi bi-clock me-1"></i>
-                                                            @if(is_string($sub->expires_at))
-                                                                Valide jusqu'au {{ \Carbon\Carbon::parse($sub->expires_at)->format('d/m/Y') }}
-                                                            @else
-                                                                Valide jusqu'au {{ $sub->expires_at->format('d/m/Y') }}
+                                                    <div class="d-flex align-items-start w-100 me-3">
+                                                        <i class="bi bi-book-fill text-primary fs-5 me-3 mt-1"></i>
+                                                        <div class="flex-grow-1">
+                                                            <div class="fw-bold text-dark fs-6 mb-1">
+                                                                {{ $formation->title }}
+                                                            </div>
+                                                            @if($sub && $sub->expires_at)
+                                                                <div class="small text-success fw-semibold mb-1">
+                                                                    <i class="bi bi-clock me-1"></i>
+                                                                    @if(is_string($sub->expires_at))
+                                                                        Valide jusqu'au {{ \Carbon\Carbon::parse($sub->expires_at)->format('d/m/Y') }}
+                                                                    @else
+                                                                        Valide jusqu'au {{ $sub->expires_at->format('d/m/Y') }}
+                                                                    @endif
+                                                                </div>
+                                                                <div class="small text-muted fw-bold">
+                                                                    <i class="bi bi-hourglass-split me-1"></i> Reste: {{ $sub->days_remaining }}
+                                                                </div>
                                                             @endif
-                                                            <small class="d-block fw-bold mt-1">
-                                                                <i class="bi bi-hourglass-split me-1"></i> Reste: {{ $sub->days_remaining }}
-                                                            </small>
-                                                        </span>
-                                                    @endif
+                                                        </div>
+                                                    </div>
                                                 </button>
                                             </h2>
                                             <div id="collapse{{ $formation->id }}" class="accordion-collapse collapse"
