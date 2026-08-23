@@ -267,7 +267,7 @@ class SubscriptionController extends Controller
         }
 
         // Validation conditionnelle de payment_reference
-        $paymentRules = ($item->price > 0) ? ['required', 'string', 'max:255', 'unique:subscriptions,payment_reference'] : ['nullable', 'string', 'max:255', 'unique:subscriptions,payment_reference'];
+        $paymentRules = ($item->price > 0) ? ['required', 'string', 'max:255', 'unique:subscriptions,payment_reference'] : ['nullable'];
 
         $validated = $request->validate([
             'subscription_type' => 'required|in:formation,course,chapter',

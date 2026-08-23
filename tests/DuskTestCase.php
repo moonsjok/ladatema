@@ -54,6 +54,6 @@ abstract class DuskTestCase extends BaseTestCase
      */
     protected function baseUrl(): string
     {
-        return 'https://ladatema.kom';
+        return 'http://ladatema.kom';
     }
 }

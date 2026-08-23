@@ -91,7 +91,7 @@ Route::get('/subscriptions/select', [SubscriptionController::class, 'selectType'
 Route::get('/subscriptions/create-account', [SubscriptionController::class, 'createAccount'])->name('subscriptions.createAccount');
 Route::post('/subscriptions/store-account', [SubscriptionController::class, 'storeAccount'])->name('subscriptions.storeAccount');
 Route::get('/subscriptions/confirm', [SubscriptionController::class, 'confirm'])->name('subscriptions.confirm');
-Route::post('/subscriptions/store', [SubscriptionController::class, 'store'])->name('subscriptions.store.public')->middleware(['auth', 'profile.complete']);
+Route::post('/subscriptions/store', [SubscriptionController::class, 'store'])->name('subscriptions.store.public')->middleware(['auth']);
 
 
 
