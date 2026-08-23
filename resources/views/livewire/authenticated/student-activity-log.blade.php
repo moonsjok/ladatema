@@ -1,5 +1,5 @@
-<div id="student-activity-log-root" class="card border-0 shadow-sm rounded-4">
-    <div class="card-header bg-primary text-white py-3 rounded-top-4">
+<div id="student-activity-log-root" class="card border-0 shadow-sm rounded-0">
+    <div class="card-header bg-primary text-white py-3 rounded-0">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="fw-bold mb-0">
                 <i class="bi bi-activity me-2"></i> Journal des Activités
@@ -19,7 +19,7 @@
         @else
             <div class="activity-timeline">
                 @foreach ($activities as $log)
-                    <div class="card border-0 shadow-sm rounded-3 mb-3 p-3 bg-white border-start border-4 border-{{ $log['color'] }}">
+                    <div class="card border-0 shadow-sm rounded-0 mb-3 p-3 bg-white border-start border-4 border-{{ $log['color'] }}">
                         <!-- Ligne 1: Icône + Titre -->
                         <div class="fw-bold text-dark fs-6 mb-1">
                             <i class="bi {{ $log['icon'] }} text-{{ $log['color'] }} me-2 fs-5"></i>

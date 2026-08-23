@@ -81,15 +81,17 @@ class SecureController extends Controller
                 ->with(['formation.courses.chapters', 'course', 'chapter'])
                 ->get();
 
-            // 2. Souscriptions expirées ou en attente
+            // 2. Souscriptions en attente de validation
+            $pendingSubscriptions = $user->souscriptions()
+                ->where('is_validated', 0)
+                ->with(['formation', 'course', 'chapter'])
+                ->get();
+
+            // 3. Souscriptions expirées (validées mais expirées)
             $expiredSubscriptions = $user->souscriptions()
-                ->where(function ($query) {
-                    $query->where('is_validated', 0)
-                          ->orWhere(function ($q) {
-                              $q->whereNotNull('expires_at')
-                                ->where('expires_at', '<', now());
-                          });
-                })
+                ->where('is_validated', 1)
+                ->whereNotNull('expires_at')
+                ->where('expires_at', '<', now())
                 ->with(['formation', 'course', 'chapter'])
                 ->get();
 
@@ -174,6 +176,7 @@ class SecureController extends Controller
             $data = [
                 'profile' => $user->profile,
                 'souscriptions' => $activeSubscriptions,
+                'pendingSubscriptions' => $pendingSubscriptions,
                 'expiredSubscriptions' => $expiredSubscriptions,
                 'formations' => $formations,
                 'activityLog' => $activityLog,

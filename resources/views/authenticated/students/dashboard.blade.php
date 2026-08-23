@@ -62,7 +62,7 @@
             <div class="col-md-8 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="fw-bold mb-0">
-                        <i class="bi bi-mortarboard-fill text-primary me-2"></i> Mes Formations & Souscriptions
+                        <i class="bi bi-mortarboard-fill text-primary me-2"></i> Mes Formations
                     </h2>
 <a href="{{ route('guest.formationsList') }}"
    class="btn btn-sm btn-outline-primary fw-semibold">
@@ -71,7 +71,7 @@
 </a>
                 </div>
 
-                @if ($formations->isEmpty() && (!isset($expiredSubscriptions) || $expiredSubscriptions->isEmpty()))
+                @if ($formations->isEmpty() && (!isset($pendingSubscriptions) || $pendingSubscriptions->isEmpty()) && (!isset($expiredSubscriptions) || $expiredSubscriptions->isEmpty()))
                     <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
                         <div class="mb-3">
                             <i class="bi bi-journal-album display-1 text-primary"></i>
@@ -88,7 +88,7 @@
                         </div>
                     </div>
                 @else
-                    <!-- Section Souscriptions Actives -->
+                    <!-- Section 1 : Souscriptions Actives -->
                     @if(!$formations->isEmpty())
                         @php
                             $isSingleFormation = ($formations->count() === 1);
@@ -196,13 +196,54 @@
                         </div>
                     @endif
 
-                    <!-- Section Souscriptions Expirées ou En Attente -->
+                    <!-- Section 2 : Souscriptions En Attente de Validation -->
+                    @if(isset($pendingSubscriptions) && !$pendingSubscriptions->isEmpty())
+                        <div class="mt-4">
+                            <h5 class="fw-bold text-warning mb-3">
+                                <i class="bi bi-hourglass-split me-2"></i> Souscriptions En Attente de Validation
+                            </h5>
+                            <div class="card border-0 shadow-sm rounded-3 overflow-hidden border-start border-4 border-warning">
+                                <div class="list-group list-group-flush">
+                                    @foreach($pendingSubscriptions as $pendSub)
+                                        @php
+                                            $itemTitle = $pendSub->formation ? $pendSub->formation->title : ($pendSub->course ? $pendSub->course->title : ($pendSub->chapter ? $pendSub->chapter->title : 'Contenu Pédagogique'));
+                                        @endphp
+                                        <div class="list-group-item p-3 border-bottom">
+                                            <!-- Ligne 1: Titre -->
+                                            <div class="fw-bold text-dark fs-6 mb-1">
+                                                <i class="bi bi-hourglass-top text-warning me-2"></i>{{ $itemTitle }}
+                                            </div>
+
+                                            <!-- Ligne 2: Type -->
+                                            <div class="small text-muted mb-2">
+                                                <i class="bi bi-tag me-1"></i> Type: {{ strtoupper($pendSub->type) }}
+                                            </div>
+
+                                            <!-- Ligne 3: Statut -->
+                                            <div class="mb-2">
+                                                <span class="badge bg-warning text-dark px-2.5 py-1.5 fw-semibold">
+                                                    <i class="bi bi-clock-history me-1"></i> En attente de validation par l'administration
+                                                </span>
+                                            </div>
+
+                                            <!-- Ligne 4: Informations -->
+                                            <div class="small text-muted">
+                                                <i class="bi bi-calendar-event me-1"></i> Demande soumise le {{ $pendSub->created_at ? $pendSub->created_at->format('d/m/Y à H:i') : 'N/A' }}
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Section 3 : Souscriptions Expirées -->
                     @if(isset($expiredSubscriptions) && !$expiredSubscriptions->isEmpty())
                         <div class="mt-4">
                             <h5 class="fw-bold text-danger mb-3">
-                                <i class="bi bi-clock-history me-2"></i> <!--Souscriptions--> Expirées ou En Attente
+                                <i class="bi bi-clock-history me-2"></i> Souscriptions Expirées
                             </h5>
-                            <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                            <div class="card border-0 shadow-sm rounded-3 overflow-hidden border-start border-4 border-danger">
                                 <div class="list-group list-group-flush">
                                     @foreach($expiredSubscriptions as $expSub)
                                         @php
@@ -221,20 +262,14 @@
 
                                             <!-- Ligne 3: Statut -->
                                             <div class="mb-2">
-                                                @if(!$expSub->is_validated)
-                                                    <span class="badge bg-warning text-dark px-2.5 py-1.5 fw-semibold">
-                                                        <i class="bi bi-hourglass-split me-1"></i> En attente de validation
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-danger px-2.5 py-1.5 fw-semibold">
-                                                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Expirée le 
-                                                        @if($expSub->expires_at)
-                                                            {{ is_string($expSub->expires_at) ? \Carbon\Carbon::parse($expSub->expires_at)->format('d/m/Y') : $expSub->expires_at->format('d/m/Y') }}
-                                                        @else
-                                                            N/A
-                                                        @endif
-                                                    </span>
-                                                @endif
+                                                <span class="badge bg-danger px-2.5 py-1.5 fw-semibold">
+                                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Expirée le 
+                                                    @if($expSub->expires_at)
+                                                        {{ is_string($expSub->expires_at) ? \Carbon\Carbon::parse($expSub->expires_at)->format('d/m/Y') : $expSub->expires_at->format('d/m/Y') }}
+                                                    @else
+                                                        N/A
+                                                    @endif
+                                                </span>
                                             </div>
 
                                             <!-- Ligne 4: Bouton d'action -->
