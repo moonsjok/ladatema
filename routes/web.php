@@ -176,7 +176,8 @@ Route::middleware(['auth', 'profile.complete'])->group(function () {
     Route::post('/profile/complete', [ProfileController::class, 'submitForm'])->name('profile.complete.submit');
 
 
-    // ✅ Système de Notifications (Dev & Owner)
+    // ✅ Système de Notifications
+    Route::get('/my-notifications', [AppNotificationController::class, 'myNotifications'])->name('user.notifications');
     Route::get('/app-notifications', [AppNotificationController::class, 'index'])->name('app-notifications.index');
     Route::post('/app-notifications', [AppNotificationController::class, 'store'])->name('app-notifications.store');
     Route::delete('/app-notifications/{notification}', [AppNotificationController::class, 'destroy'])->name('app-notifications.destroy');

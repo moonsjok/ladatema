@@ -107,6 +107,38 @@ class StudentActivityLog extends Component
             ]);
         }
 
+        // 4. Notifications reçues
+        $notifications = \App\Models\AppNotification::with('sender')
+            ->where(function ($query) use ($user) {
+                $query->where('target_type', 'all')
+                      ->orWhere('target_type', $user->role)
+                      ->orWhere(function ($q) use ($user) {
+                          $q->where('target_type', 'user')
+                            ->where('target_user_id', $user->id);
+                      });
+            })
+            ->latest()
+            ->take(15)
+            ->get();
+
+        $readNotificationIds = \App\Models\AppNotificationRead::where('user_id', $user->id)
+            ->pluck('notification_id')
+            ->toArray();
+
+        foreach ($notifications as $notif) {
+            $isRead = in_array($notif->id, $readNotificationIds);
+            $activityLog->push([
+                'id' => 'notif_' . $notif->id,
+                'type' => 'notification',
+                'icon' => $notif->is_important ? 'bi-shield-exclamation' : 'bi-bell-fill',
+                'color' => $notif->is_important ? 'danger' : 'info',
+                'title' => 'Notification : ' . $notif->title,
+                'status' => $isRead ? 'Déjà lue' : 'Nouvelle notification',
+                'description' => \Illuminate\Support\Str::limit(strip_tags($notif->message), 100),
+                'date' => $notif->created_at,
+            ]);
+        }
+
         // Tri par date décroissante
         return $activityLog->sortByDesc('date')->values();
     }

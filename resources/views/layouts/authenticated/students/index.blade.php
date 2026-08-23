@@ -67,8 +67,9 @@
                                     <div class="col-10 text-center">
                                         @yield('page-title')
                                     </div>
-                                    <div class="col-2 d-flex justify-content-end align-items-stretch p-0">
-                                        <a class=" text-danger fw-bold mb-3 " href="{{ route('logout') }}"
+                                    <div class="col-2 d-flex justify-content-end align-items-center p-0">
+                                        @livewire('authenticated.header-notification-bell')
+                                        <a class=" text-danger fw-bold mb-0 " href="{{ route('logout') }}"
                                             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                             <i class="bi bi-box-arrow-right"></i>
                                         </a>

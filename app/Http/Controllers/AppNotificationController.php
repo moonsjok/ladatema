@@ -145,4 +145,30 @@ class AppNotificationController extends Controller
         return redirect()->route('app-notifications.index')
             ->with('success', 'Notification supprimée avec succès.');
     }
+
+    /**
+     * Afficher toutes les notifications reçues par l'utilisateur connecté (Boîte de réception complète).
+     */
+    public function myNotifications()
+    {
+        $user = auth()->user();
+
+        $notifications = AppNotification::with('sender')
+            ->where(function ($query) use ($user) {
+                $query->where('target_type', 'all')
+                      ->orWhere('target_type', $user->role)
+                      ->orWhere(function ($q) use ($user) {
+                          $q->where('target_type', 'user')
+                            ->where('target_user_id', $user->id);
+                      });
+            })
+            ->latest()
+            ->paginate(15);
+
+        $readIds = AppNotificationRead::where('user_id', $user->id)
+            ->pluck('notification_id')
+            ->toArray();
+
+        return view('authenticated.my_notifications', compact('notifications', 'readIds', 'user'));
+    }
 }

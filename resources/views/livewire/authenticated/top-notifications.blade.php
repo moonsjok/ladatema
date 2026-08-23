@@ -5,7 +5,7 @@
             @if($notifications->count() > 1)
                 <div class="d-flex justify-content-between align-items-center mb-2 px-1">
                     <div class="d-flex align-items-center">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fs-7 me-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fs-7 me-2">
                             <i class="bi bi-bell-fill me-1"></i> {{ $notifications->count() }} NOUVELLES NOTIFICATIONS
                         </span>
                     </div>
@@ -24,18 +24,26 @@
                      style="background: {{ $notif->is_important ? '#fff8f8' : '#f8fafc' }}; transition: all 0.2s ease-in-out;"
                      wire:key="top-notif-{{ $notif->id }}">
                     <div class="card-body p-3">
-                        <div class="d-flex align-items-start">
-                            <!-- Badge d'icône style Google Material -->
-                            <div class="me-3 flex-shrink-0">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-xs" 
+                        <div class="d-flex flex-column flex-sm-row align-items-start">
+                            <!-- En-tête Mobile & Icône -->
+                            <div class="d-flex align-items-center w-100 w-sm-auto mb-2 mb-sm-0 me-sm-3 flex-shrink-0">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-xs me-2.5 me-sm-0" 
                                      style="width: 42px; height: 42px; background: {{ $notif->is_important ? '#fee2e2' : '#e8f0fe' }}; color: {{ $notif->is_important ? '#dc2626' : '#1a73e8' }};">
                                     <i class="bi {{ $notif->is_important ? 'bi-shield-exclamation' : 'bi-megaphone-fill' }} fs-5"></i>
+                                </div>
+                                <div class="d-block d-sm-none flex-grow-1">
+                                    <span class="badge bg-{{ $notif->is_important ? 'danger' : 'primary' }} px-2 py-0.5 rounded-pill me-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">
+                                        {{ $notif->is_important ? 'URGENT' : 'ANNONCE' }}
+                                    </span>
+                                    <span class="text-muted small ms-1" style="font-size: 0.75rem;">
+                                        {{ $notif->created_at->diffForHumans() }}
+                                    </span>
                                 </div>
                             </div>
 
                             <!-- Contenu principal -->
-                            <div class="flex-grow-1 me-2">
-                                <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                            <div class="flex-grow-1 w-100 me-sm-2 mb-2 mb-sm-0">
+                                <div class="d-none d-sm-flex align-items-center flex-wrap gap-2 mb-1">
                                     <span class="badge bg-{{ $notif->is_important ? 'danger' : 'primary' }} px-2 py-0.5 rounded-pill" style="font-size: 0.7rem; letter-spacing: 0.5px;">
                                         {{ $notif->is_important ? 'URGENT' : 'ANNONCE' }}
                                     </span>
@@ -43,6 +51,11 @@
                                         {!! $notif->title !!}
                                     </h6>
                                 </div>
+
+                                <!-- Titre affiché sur Mobile -->
+                                <h6 class="fw-bold mb-1 text-dark d-block d-sm-none" style="font-size: 0.95rem;">
+                                    {!! $notif->title !!}
+                                </h6>
 
                                 <div class="text-secondary mb-2" style="font-size: 0.9rem; line-height: 1.55; white-space: pre-line; color: #374151;">
                                     {!! $notif->message !!}
@@ -57,10 +70,10 @@
                                 </div>
                             </div>
 
-                            <!-- Bouton d'action -->
-                            <div class="flex-shrink-0 ms-2">
+                            <!-- Bouton d'action Responsive -->
+                            <div class="w-100 w-sm-auto flex-shrink-0 align-self-sm-center pt-2 pt-sm-0 border-top border-sm-0">
                                 <button type="button" 
-                                        class="btn btn-sm btn-white border shadow-xs text-secondary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center"
+                                        class="btn btn-sm btn-white border shadow-xs text-secondary rounded-pill px-3 py-1.5 fw-semibold w-100 w-sm-auto d-inline-flex align-items-center justify-content-center"
                                         style="font-size: 0.82rem; background: #ffffff;"
                                         wire:click="markAsRead({{ $notif->id }})"
                                         wire:loading.attr="disabled"
@@ -70,6 +83,7 @@
                                     </span>
                                     <span wire:loading wire:target="markAsRead({{ $notif->id }})">
                                         <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                        Traitement...
                                     </span>
                                 </button>
                             </div>
