@@ -163,7 +163,6 @@ class SecureController extends Controller
                 'expiredSubscriptions' => $expiredSubscriptions,
                 'formations' => $formations,
                 'activityLog' => $activityLog,
-                'topNotifications' => $topNotifications,
             ];
 
             return view('authenticated.students.dashboard', $data);
