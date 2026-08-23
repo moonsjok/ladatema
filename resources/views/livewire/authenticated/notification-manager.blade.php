@@ -318,12 +318,14 @@
                             </div>
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center mb-1">
-                                    <h5 class="alert-heading fw-bold mb-0 me-2">{{ $title }}</h5>
+                                    <h5 class="alert-heading fw-bold mb-0 me-2">{!! $title !!}</h5>
                                     @if($is_important)
                                         <span class="badge bg-danger rounded-pill">Important</span>
                                     @endif
                                 </div>
-                                <p class="mb-0 text-dark" style="white-space: pre-line;">{{ $message }}</p>
+                                <p class="mb-0 text-dark" style="white-space: pre-line;">
+                                    {!! $message !!}
+                                </p>
                                 <small class="text-muted d-block mt-1" style="font-size: 0.8rem;">
                                     <i class="bi bi-clock me-1"></i> De : {{ $authUser->name }} (À l'instant)
                                 </small>
@@ -361,4 +363,22 @@
             </div>
         @endif
     </div>
+
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('swal', (data) => {
+                const payload = Array.isArray(data) ? data[0] : data;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: payload.icon || 'success',
+                        title: payload.title || '',
+                        text: payload.text || payload.message || '',
+                        timer: payload.timer || 4000,
+                        showConfirmButton: payload.showConfirmButton !== undefined ? payload.showConfirmButton : true,
+                        confirmButtonColor: '#0d6efd'
+                    });
+                }
+            });
+        });
+    </script>
 </div>

@@ -12,12 +12,14 @@
 
     <div class="row">
         <!-- Assistant Livewire d'envoi de notification (Multi-étapes) -->
-        <div class="col-lg-5 mb-4">
+        <div class="col-md-12 mb-2">
             @livewire('authenticated.notification-manager')
         </div>
-
+    </div>
+    <div class="row">
+        
         <!-- Historique des notifications envoyées -->
-        <div class="col-lg-7 mb-4">
+        <div class="col-md-12 mb-4">
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-header bg-dark text-white py-3 rounded-top-4">
                     <h5 class="card-title mb-0 fw-bold fs-6">
@@ -80,10 +82,10 @@
                                                 </span>
                                             </td>
                                             <td class="text-end">
-                                                <form action="{{ route('app-notifications.destroy', $notification->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette notification ?');">
+                                                <form action="{{ route('app-notifications.destroy', $notification->id) }}" method="POST" class="d-inline" id="delete-notif-form-{{ $notification->id }}">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" title="Supprimer">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" title="Supprimer" onclick="confirmDeleteNotif({{ $notification->id }})">
                                                         <i class="bi bi-trash-fill"></i>
                                                     </button>
                                                 </form>
@@ -100,6 +102,31 @@
                 </div>
             </div>
         </div>
-    </div>
 </div>
+</div>
+
+<script>
+    function confirmDeleteNotif(id) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Supprimer la notification ?',
+                text: "Cette action est définitive !",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, supprimer !',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('delete-notif-form-' + id).submit();
+                }
+            });
+        } else {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
+                document.getElementById('delete-notif-form-' + id).submit();
+            }
+        }
+    }
+</script>
 @endsection

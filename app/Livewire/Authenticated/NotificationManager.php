@@ -130,6 +130,15 @@ class NotificationManager extends Component
             }
 
             $this->successMessage = 'La notification a été publiée avec succès !';
+            
+            // Émettre l'événement SweetAlert
+            $this->dispatch('swal', [
+                'icon' => 'success',
+                'title' => 'Notification publiée !',
+                'text' => 'La notification a été publiée avec succès sur le tableau de bord.',
+                'timer' => 4000,
+            ]);
+
             $this->resetForm();
             $this->step = 1;
             
@@ -137,6 +146,12 @@ class NotificationManager extends Component
         } catch (\Exception $e) {
             Log::error("Erreur création notification Livewire: " . $e->getMessage());
             $this->addError('send_error', 'Une erreur est survenue lors de l\'envoi de la notification.');
+            
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Erreur',
+                'text' => 'Une erreur est survenue lors de la création de la notification.',
+            ]);
         }
     }
 
