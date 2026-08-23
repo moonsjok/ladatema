@@ -14,28 +14,31 @@ class CourseViewer extends Component
     public $nextCourse = null;
     public $previousCourse = null;
 
-    public function mount($courseId)
+    public function mount($courseId, $chapterId = null)
     {
-        $this->selectCourse($courseId);
+        $this->selectCourse($courseId, $chapterId);
     }
 
-    public function selectCourse($courseId)
+    public function selectCourse($courseId, $preferredChapterId = null)
     {
         $this->selectedCourse = Course::findOrFail($courseId);
-        $this->chapters = $this->selectedCourse->chapters()->orderBy('numero')->get(); // Ordonner les chapitres par numéro
+        $this->chapters = $this->selectedCourse->chapters()->orderBy('numero', 'asc')->get();
 
-        // Vérifier s'il y a des chapitres avant de sélectionner le premier
         if ($this->chapters->isNotEmpty()) {
-            $this->selectChapter($this->chapters->first()->id);
+            if ($preferredChapterId && $this->chapters->contains('id', $preferredChapterId)) {
+                $this->selectChapter($preferredChapterId);
+            } else {
+                $this->selectChapter($this->chapters->first()->id);
+            }
         } else {
-            $this->selectedChapter = null; // Aucun chapitre disponible
+            $this->selectedChapter = null;
         }
+
         $this->loadAdjacentCourses();
     }
 
     public function loadAdjacentCourses()
     {
-        // Charger le cours suivant et précédent
         $this->nextCourse = Course::where('formation_id', $this->selectedCourse->formation_id)
             ->where('id', '>', $this->selectedCourse->id)
             ->orderBy('id', 'asc')
@@ -49,29 +52,46 @@ class CourseViewer extends Component
 
     public function selectChapter($chapterId)
     {
-        $this->selectedChapter = Chapter::findOrFail($chapterId);
+        $this->selectedChapter = Chapter::find($chapterId);
+        $this->dispatch('chapter-changed');
     }
 
     public function nextChapter()
     {
-        // Sélectionner le chapitre suivant
-        $nextChapter = $this->chapters->where('numero', '>', $this->selectedChapter->numero)->first();
+        if (!$this->selectedChapter) {
+            if ($this->chapters->isNotEmpty()) {
+                $this->selectChapter($this->chapters->first()->id);
+            }
+            return;
+        }
+
+        $nextChapter = $this->chapters
+            ->where('numero', '>', $this->selectedChapter->numero)
+            ->sortBy('numero')
+            ->first();
 
         if ($nextChapter) {
             $this->selectChapter($nextChapter->id);
-        } else {
-            // Si c'est le dernier chapitre, naviguer vers le prochain cours
+        } else if ($this->nextCourse) {
             $this->goToNextCourse();
         }
     }
 
     public function previousChapter()
     {
-        // Sélectionner le chapitre précédent
-        $previousChapter = $this->chapters->where('numero', '<', $this->selectedChapter->numero)->first();
+        if (!$this->selectedChapter) {
+            return;
+        }
+
+        $previousChapter = $this->chapters
+            ->where('numero', '<', $this->selectedChapter->numero)
+            ->sortByDesc('numero')
+            ->first();
 
         if ($previousChapter) {
             $this->selectChapter($previousChapter->id);
+        } else if ($this->previousCourse) {
+            $this->goToPreviousCourse();
         }
     }
 
@@ -91,12 +111,26 @@ class CourseViewer extends Component
 
     public function render()
     {
+        $currentIndex = 0;
+        $totalChapters = $this->chapters->count();
+        $progressPercent = 0;
+
+        if ($this->selectedChapter && $totalChapters > 0) {
+            $sortedList = $this->chapters->pluck('id')->values()->all();
+            $pos = array_search($this->selectedChapter->id, $sortedList);
+            $currentIndex = ($pos !== false) ? $pos + 1 : 1;
+            $progressPercent = round(($currentIndex / $totalChapters) * 100);
+        }
+
         return view('livewire.authenticated.course-viewer', [
             'chapters' => $this->chapters,
             'selectedChapter' => $this->selectedChapter,
             'selectedCourse' => $this->selectedCourse,
             'nextCourse' => $this->nextCourse,
             'previousCourse' => $this->previousCourse,
+            'currentIndex' => $currentIndex,
+            'totalChapters' => $totalChapters,
+            'progressPercent' => $progressPercent,
         ]);
     }
 }

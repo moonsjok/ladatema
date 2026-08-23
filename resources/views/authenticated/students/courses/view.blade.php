@@ -13,9 +13,9 @@
         <a href="https://www.google.com/chrome/" target="_blank" class="text-decoration-underline">Télécharger</a>
     </div>
 
-    <div class="d-flex justify-content-between p-3">
-        <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-2"></i> Retour
+    <div class="mb-3">
+        <a href="{{ url()->previous() }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
+            <i class="bi bi-arrow-left me-1.5"></i> Retour
         </a>
     </div>
 
