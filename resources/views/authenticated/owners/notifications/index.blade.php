@@ -82,6 +82,9 @@
                                                 </span>
                                             </td>
                                             <td class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle me-1" title="Modifier la notification" onclick="triggerEditNotif({{ $notification->id }})">
+                                                    <i class="bi bi-pencil-fill"></i>
+                                                </button>
                                                 <form action="{{ route('app-notifications.destroy', $notification->id) }}" method="POST" class="d-inline" id="delete-notif-form-{{ $notification->id }}">
                                                     @csrf
                                                     @method('DELETE')
@@ -106,6 +109,13 @@
 </div>
 
 <script>
+    function triggerEditNotif(id) {
+        if (typeof Livewire !== 'undefined') {
+            Livewire.dispatch('edit-notification', { id: id });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
     function confirmDeleteNotif(id) {
         if (typeof Swal !== 'undefined') {
             Swal.fire({

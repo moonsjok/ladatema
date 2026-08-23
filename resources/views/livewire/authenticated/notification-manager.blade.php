@@ -24,6 +24,23 @@
             </div>
         @endif
 
+        @if($editingNotificationId)
+            <div class="alert alert-warning alert-dismissible fade show rounded-3 shadow-sm border-start border-4 border-warning mb-4" role="alert">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-pencil-square fs-4 me-3 text-warning"></i>
+                        <div>
+                            <h6 class="fw-bold mb-0">Mode Édition Activé</h6>
+                            <p class="mb-0 small text-secondary">Vous modifiez la notification <strong>#{{ $editingNotificationId }}</strong>. Les changements mettront à jour le message publié.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3" wire:click="cancelEdit">
+                        <i class="bi bi-x-circle me-1"></i> Annuler l'édition
+                    </button>
+                </div>
+            </div>
+        @endif
+
         <!-- Barre de progression des étapes -->
         <div class="position-relative mb-4 pb-2">
             <div class="progress" style="height: 4px;">
@@ -382,11 +399,12 @@
                             wire:click="sendNotification" 
                             wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="sendNotification">
-                            <i class="bi bi-send-fill me-1"></i> Confirmer & Envoyer
+                            <i class="bi {{ $editingNotificationId ? 'bi-check-circle-fill' : 'bi-send-fill' }} me-1"></i>
+                            {{ $editingNotificationId ? 'Enregistrer les modifications' : 'Confirmer & Envoyer' }}
                         </span>
                         <span wire:loading wire:target="sendNotification">
                             <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                            Envoi en cours...
+                            Enregistrement...
                         </span>
                     </button>
                 </div>

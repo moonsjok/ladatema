@@ -24,8 +24,16 @@ class NotificationManager extends Component
     public $is_important = false;
     public $send_email = false;
 
+    // Editing mode
+    public $editingNotificationId = null;
+
     // Status feedback
     public $successMessage = null;
+
+    protected $listeners = [
+        'edit-notification' => 'editNotification',
+        'notification-sent' => '$refresh',
+    ];
 
     public function mount()
     {
@@ -51,6 +59,64 @@ class NotificationManager extends Component
     public function clearSelectedUser()
     {
         $this->target_user_id = null;
+    }
+
+    public function editNotification($id)
+    {
+        $notification = AppNotification::find($id);
+        if (!$notification) {
+            return;
+        }
+
+        $this->editingNotificationId = $notification->id;
+        $this->target_type = $notification->target_type;
+        $this->target_user_id = $notification->target_user_id;
+        $this->title = $notification->title;
+        $this->message = $notification->message;
+        $this->is_important = (bool)$notification->is_important;
+        $this->send_email = false;
+
+        if ($this->target_type === 'user' && $this->target_user_id) {
+            $user = User::find($this->target_user_id);
+            $this->searchUser = $user ? $user->name : '';
+        }
+
+        $this->step = 1;
+
+        $this->dispatch('swal', [
+            'icon' => 'info',
+            'title' => 'Mode Édition',
+            'text' => "Vous modifiez la notification #{$id}.",
+            'timer' => 3000,
+        ]);
+    }
+
+    public function cancelEdit()
+    {
+        $this->editingNotificationId = null;
+        $this->resetForm();
+        $this->step = 1;
+    }
+
+    public function deleteNotification($id)
+    {
+        $notification = AppNotification::find($id);
+        if ($notification) {
+            $notification->delete();
+
+            $this->dispatch('swal', [
+                'icon' => 'success',
+                'title' => 'Notification supprimée !',
+                'text' => 'La notification a été supprimée de l\'historique.',
+                'timer' => 3500,
+            ]);
+
+            if ($this->editingNotificationId === $id) {
+                $this->cancelEdit();
+            }
+
+            $this->dispatch('notification-sent');
+        }
     }
 
     public function goToStep($nextStep)
@@ -106,51 +172,73 @@ class NotificationManager extends Component
         $authUser = Auth::user();
 
         try {
-            $notification = AppNotification::create([
-                'sender_id' => $authUser->id,
-                'target_type' => $this->target_type,
-                'target_user_id' => $this->target_type === 'user' ? $this->target_user_id : null,
-                'title' => $this->title,
-                'message' => $this->message,
-                'is_important' => (bool)$this->is_important,
-            ]);
+            if ($this->editingNotificationId) {
+                // Modification d'une notification existante
+                $notification = AppNotification::findOrFail($this->editingNotificationId);
+                $notification->update([
+                    'target_type' => $this->target_type,
+                    'target_user_id' => $this->target_type === 'user' ? $this->target_user_id : null,
+                    'title' => $this->title,
+                    'message' => $this->message,
+                    'is_important' => (bool)$this->is_important,
+                ]);
 
-            // Envoi par e-mail si demandé ou si destinataire spécifique
-            if ($this->send_email || ($this->target_type === 'user' && $this->target_user_id)) {
-                if ($this->target_type === 'user' && $this->target_user_id) {
-                    $targetUser = User::find($this->target_user_id);
-                    if ($targetUser && !empty($targetUser->email)) {
-                        try {
-                            Mail::to($targetUser->email)->send(new AppNotificationMail($notification, $targetUser));
-                        } catch (\Exception $e) {
-                            Log::error("Échec de l'envoi de l'e-mail de notification individuelle : " . $e->getMessage());
+                $this->successMessage = 'La notification a été mise à jour avec succès !';
+
+                $this->dispatch('swal', [
+                    'icon' => 'success',
+                    'title' => 'Notification mise à jour !',
+                    'text' => 'Les modifications ont été enregistrées avec succès.',
+                    'timer' => 4000,
+                ]);
+            } else {
+                // Création d'une nouvelle notification
+                $notification = AppNotification::create([
+                    'sender_id' => $authUser->id,
+                    'target_type' => $this->target_type,
+                    'target_user_id' => $this->target_type === 'user' ? $this->target_user_id : null,
+                    'title' => $this->title,
+                    'message' => $this->message,
+                    'is_important' => (bool)$this->is_important,
+                ]);
+
+                // Envoi par e-mail si demandé
+                if ($this->send_email || ($this->target_type === 'user' && $this->target_user_id)) {
+                    if ($this->target_type === 'user' && $this->target_user_id) {
+                        $targetUser = User::find($this->target_user_id);
+                        if ($targetUser && !empty($targetUser->email)) {
+                            try {
+                                Mail::to($targetUser->email)->send(new AppNotificationMail($notification, $targetUser));
+                            } catch (\Exception $e) {
+                                Log::error("Échec de l'envoi de l'e-mail de notification individuelle : " . $e->getMessage());
+                            }
                         }
                     }
                 }
+
+                $this->successMessage = 'La notification a été publiée avec succès !';
+
+                $this->dispatch('swal', [
+                    'icon' => 'success',
+                    'title' => 'Notification publiée !',
+                    'text' => 'La notification a été publiée avec succès sur le tableau de bord.',
+                    'timer' => 4000,
+                ]);
             }
 
-            $this->successMessage = 'La notification a été publiée avec succès !';
-            
-            // Émettre l'événement SweetAlert
-            $this->dispatch('swal', [
-                'icon' => 'success',
-                'title' => 'Notification publiée !',
-                'text' => 'La notification a été publiée avec succès sur le tableau de bord.',
-                'timer' => 4000,
-            ]);
-
             $this->resetForm();
+            $this->editingNotificationId = null;
             $this->step = 1;
-            
+
             $this->dispatch('notification-sent');
         } catch (\Exception $e) {
-            Log::error("Erreur création notification Livewire: " . $e->getMessage());
-            $this->addError('send_error', 'Une erreur est survenue lors de l\'envoi de la notification.');
-            
+            Log::error("Erreur gestion notification Livewire: " . $e->getMessage());
+            $this->addError('send_error', 'Une erreur est survenue lors de l\'enregistrement de la notification.');
+
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Erreur',
-                'text' => 'Une erreur est survenue lors de la création de la notification.',
+                'text' => 'Une erreur est survenue lors de l\'enregistrement de la notification.',
             ]);
         }
     }
