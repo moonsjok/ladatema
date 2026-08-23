@@ -20,73 +20,71 @@
             @endif
 
             @foreach ($notifications as $notif)
-                <div class="google-notif-card card border-0 shadow-sm rounded-3 mb-2.5 overflow-hidden border-start border-4 border-{{ $notif->is_important ? 'danger' : 'primary' }}"
+                <div class="google-notif-card card border-0 shadow-sm rounded-3 mb-3 overflow-hidden border-start border-4 border-{{ $notif->is_important ? 'danger' : 'primary' }}"
                      style="background: {{ $notif->is_important ? '#fff8f8' : '#f8fafc' }}; transition: all 0.2s ease-in-out;"
                      wire:key="top-notif-{{ $notif->id }}">
-                    <div class="card-body p-3">
-                        <div class="d-flex flex-column flex-sm-row align-items-start">
-                            <!-- En-tête Mobile & Icône -->
-                            <div class="d-flex align-items-center w-100 w-sm-auto mb-2 mb-sm-0 me-sm-3 flex-shrink-0">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-xs me-2.5 me-sm-0" 
-                                     style="width: 42px; height: 42px; background: {{ $notif->is_important ? '#fee2e2' : '#e8f0fe' }}; color: {{ $notif->is_important ? '#dc2626' : '#1a73e8' }};">
-                                    <i class="bi {{ $notif->is_important ? 'bi-shield-exclamation' : 'bi-megaphone-fill' }} fs-5"></i>
-                                </div>
-                                <div class="d-block d-sm-none flex-grow-1">
-                                    <span class="badge bg-{{ $notif->is_important ? 'danger' : 'primary' }} px-2 py-0.5 rounded-pill me-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">
-                                        {{ $notif->is_important ? 'URGENT' : 'ANNONCE' }}
-                                    </span>
-                                    <span class="text-muted small ms-1" style="font-size: 0.75rem;">
-                                        {{ $notif->created_at->diffForHumans() }}
-                                    </span>
-                                </div>
+                    <div class="card-body p-3.5">
+                        <!-- Ligne 1 : Icône sur sa propre ligne -->
+                        <div class="mb-2">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center shadow-xs" 
+                                 style="width: 40px; height: 40px; background: {{ $notif->is_important ? '#fee2e2' : '#e8f0fe' }}; color: {{ $notif->is_important ? '#dc2626' : '#1a73e8' }};">
+                                <i class="bi {{ $notif->is_important ? 'bi-shield-exclamation' : 'bi-megaphone-fill' }} fs-5"></i>
                             </div>
+                        </div>
 
-                            <!-- Contenu principal -->
-                            <div class="flex-grow-1 w-100 me-sm-2 mb-2 mb-sm-0">
-                                <div class="d-none d-sm-flex align-items-center flex-wrap gap-2 mb-1">
-                                    <span class="badge bg-{{ $notif->is_important ? 'danger' : 'primary' }} px-2 py-0.5 rounded-pill" style="font-size: 0.7rem; letter-spacing: 0.5px;">
-                                        {{ $notif->is_important ? 'URGENT' : 'ANNONCE' }}
-                                    </span>
-                                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.98rem; font-family: system-ui, -apple-system, sans-serif;">
-                                        {!! $notif->title !!}
-                                    </h6>
-                                </div>
+                        <!-- Ligne 2 : Importance sur la seconde ligne -->
+                        <div class="mb-2">
+                            <span class="badge bg-{{ $notif->is_important ? 'danger' : 'primary' }} px-2.5 py-1 rounded-pill" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                {{ $notif->is_important ? 'URGENT' : 'ANNONCE' }}
+                            </span>
+                        </div>
 
-                                <!-- Titre affiché sur Mobile -->
-                                <h6 class="fw-bold mb-1 text-dark d-block d-sm-none" style="font-size: 0.95rem;">
-                                    {!! $notif->title !!}
-                                </h6>
+                        <!-- Ligne 3 : Titre sur la troisième ligne -->
+                        <div class="mb-2">
+                            <h5 class="fw-bold text-dark mb-0" style="font-size: 1.05rem; font-family: system-ui, -apple-system, sans-serif;">
+                                {!! $notif->title !!}
+                            </h5>
+                        </div>
 
-                                <div class="text-secondary mb-2" style="font-size: 0.9rem; line-height: 1.55; white-space: pre-line; color: #374151;">
-                                    {!! $notif->message !!}
-                                </div>
+                        <!-- Ligne 4 : Message Justifié -->
+                        <div class="mb-3 text-secondary" style="font-size: 0.92rem; line-height: 1.6; white-space: pre-line; text-align: justify; color: #374151;">
+                            {!! $notif->message !!}
+                        </div>
 
-                                <div class="d-flex align-items-center text-muted small" style="font-size: 0.78rem;">
-                                    <i class="bi bi-clock me-1 text-primary"></i>
-                                    <span>{{ $notif->created_at->diffForHumans() }}</span>
-                                    <span class="mx-1.5">•</span>
-                                    <i class="bi bi-person-circle me-1"></i>
-                                    <span>De : {{ $notif->sender->name ?? 'Administration' }}</span>
-                                </div>
-                            </div>
+                        <!-- Ligne 5 : Date et heure de publication -->
+                        <div class="small text-muted mb-1" style="font-size: 0.8rem;">
+                            <i class="bi bi-calendar-event me-1.5 text-primary"></i>
+                            <strong>Date & heure :</strong> {{ $notif->created_at->format('d/m/Y à H:i') }}
+                        </div>
 
-                            <!-- Bouton d'action Responsive -->
-                            <div class="w-100 w-sm-auto flex-shrink-0 align-self-sm-center pt-2 pt-sm-0 border-top border-sm-0">
-                                <button type="button" 
-                                        class="btn btn-sm btn-white border shadow-xs text-secondary rounded-pill px-3 py-1.5 fw-semibold w-100 w-sm-auto d-inline-flex align-items-center justify-content-center"
-                                        style="font-size: 0.82rem; background: #ffffff;"
-                                        wire:click="markAsRead({{ $notif->id }})"
-                                        wire:loading.attr="disabled"
-                                        title="Marquer comme lu">
-                                    <span wire:loading.remove wire:target="markAsRead({{ $notif->id }})">
-                                        <i class="bi bi-check2 text-success me-1 fs-6"></i> Marquer comme lu
-                                    </span>
-                                    <span wire:loading wire:target="markAsRead({{ $notif->id }})">
-                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                                        Traitement...
-                                    </span>
-                                </button>
-                            </div>
+                        <!-- Ligne 6 : Temps écoulé -->
+                        <div class="small text-muted mb-1" style="font-size: 0.8rem;">
+                            <i class="bi bi-clock-history me-1.5 text-primary"></i>
+                            <strong>Temps écoulé :</strong> {{ $notif->created_at->diffForHumans() }}
+                        </div>
+
+                        <!-- Ligne 7 : Expéditeur -->
+                        <div class="small text-muted mb-3" style="font-size: 0.8rem;">
+                            <i class="bi bi-person-circle me-1.5 text-primary"></i>
+                            <strong>Expéditeur :</strong> {{ $notif->sender->name ?? 'Administration' }}
+                        </div>
+
+                        <!-- Ligne 8 : Bouton d'action sur une nouvelle ligne -->
+                        <div>
+                            <button type="button" 
+                                    class="btn btn-sm btn-white border shadow-xs text-secondary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center"
+                                    style="font-size: 0.82rem; background: #ffffff;"
+                                    wire:click="markAsRead({{ $notif->id }})"
+                                    wire:loading.attr="disabled"
+                                    title="Marquer comme lu">
+                                <span wire:loading.remove wire:target="markAsRead({{ $notif->id }})">
+                                    <i class="bi bi-check2 text-success me-1 fs-6"></i> Marquer comme lu
+                                </span>
+                                <span wire:loading wire:target="markAsRead({{ $notif->id }})">
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                    Traitement...
+                                </span>
+                            </button>
                         </div>
                     </div>
                 </div>

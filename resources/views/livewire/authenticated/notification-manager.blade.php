@@ -311,28 +311,58 @@
                 <!-- Aperçu exact du rendu -->
                 <div class="mb-3">
                     <label class="form-label small text-muted fw-bold">Aperçu exact du bandeau notification sur le tableau de bord :</label>
-                    <div class="alert alert-{{ $is_important ? 'danger' : 'info' }} shadow-sm rounded-4 border-0 p-3 mb-0">
-                        <div class="d-flex align-items-start">
-                            <div class="me-3 fs-3 text-{{ $is_important ? 'danger' : 'info' }}">
-                                <i class="bi {{ $is_important ? 'bi-exclamation-triangle-fill' : 'bi-bell-fill' }}"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center mb-1">
-                                    <h5 class="alert-heading fw-bold mb-0 me-2">{!! $title !!}</h5>
-                                    @if($is_important)
-                                        <span class="badge bg-danger rounded-pill">Important</span>
-                                    @endif
+                    <div class="card border-0 shadow-sm rounded-3 mb-0 overflow-hidden border-start border-4 border-{{ $is_important ? 'danger' : 'primary' }}"
+                         style="background: {{ $is_important ? '#fff8f8' : '#f8fafc' }};">
+                        <div class="card-body p-3.5">
+                            <!-- Ligne 1 : Icône -->
+                            <div class="mb-2">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center shadow-xs" 
+                                     style="width: 40px; height: 40px; background: {{ $is_important ? '#fee2e2' : '#e8f0fe' }}; color: {{ $is_important ? '#dc2626' : '#1a73e8' }};">
+                                    <i class="bi {{ $is_important ? 'bi-shield-exclamation' : 'bi-megaphone-fill' }} fs-5"></i>
                                 </div>
-                                <p class="mb-0 text-dark" style="white-space: pre-line;">
-                                    {!! $message !!}
-                                </p>
-                                <small class="text-muted d-block mt-1" style="font-size: 0.8rem;">
-                                    <i class="bi bi-clock me-1"></i> De : {{ $authUser->name }} (À l'instant)
-                                </small>
                             </div>
+
+                            <!-- Ligne 2 : Importance -->
+                            <div class="mb-2">
+                                <span class="badge bg-{{ $is_important ? 'danger' : 'primary' }} px-2.5 py-1 rounded-pill" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    {{ $is_important ? 'URGENT' : 'ANNONCE' }}
+                                </span>
+                            </div>
+
+                            <!-- Ligne 3 : Titre -->
+                            <div class="mb-2">
+                                <h5 class="fw-bold text-dark mb-0" style="font-size: 1.05rem;">
+                                    {!! $title !!}
+                                </h5>
+                            </div>
+
+                            <!-- Ligne 4 : Message Justifié -->
+                            <div class="mb-3 text-secondary" style="font-size: 0.92rem; line-height: 1.6; white-space: pre-line; text-align: justify; color: #374151;">
+                                {!! $message !!}
+                            </div>
+
+                            <!-- Ligne 5 : Date et heure de publication -->
+                            <div class="small text-muted mb-1" style="font-size: 0.8rem;">
+                                <i class="bi bi-calendar-event me-1.5 text-primary"></i>
+                                <strong>Date & heure :</strong> {{ now()->format('d/m/Y à H:i') }}
+                            </div>
+
+                            <!-- Ligne 6 : Temps écoulé -->
+                            <div class="small text-muted mb-1" style="font-size: 0.8rem;">
+                                <i class="bi bi-clock-history me-1.5 text-primary"></i>
+                                <strong>Temps écoulé :</strong> À l'instant
+                            </div>
+
+                            <!-- Ligne 7 : Expéditeur -->
+                            <div class="small text-muted mb-3" style="font-size: 0.8rem;">
+                                <i class="bi bi-person-circle me-1.5 text-primary"></i>
+                                <strong>Expéditeur :</strong> {{ $authUser->name }}
+                            </div>
+
+                            <!-- Ligne 8 : Bouton d'action -->
                             <div>
-                                <span class="btn btn-sm btn-outline-secondary rounded-pill disabled opacity-75">
-                                    <i class="bi bi-check-lg me-1"></i> Marquer comme lu
+                                <span class="btn btn-sm btn-white border shadow-xs text-secondary rounded-pill px-3 py-1.5 fw-semibold disabled opacity-75" style="font-size: 0.82rem; background: #ffffff;">
+                                    <i class="bi bi-check2 text-success me-1 fs-6"></i> Marquer comme lu
                                 </span>
                             </div>
                         </div>
