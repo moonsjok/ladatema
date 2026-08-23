@@ -88,6 +88,9 @@
                 @else
                     <!-- Section Souscriptions Actives -->
                     @if(!$formations->isEmpty())
+                        @php
+                            $isSingleFormation = ($formations->count() === 1);
+                        @endphp
                         <div class="mb-4">
                             <h5 class="fw-bold text-success mb-3">
                                 <i class="bi bi-check-circle-fill me-2"></i> Souscriptions en cours (Actives)
@@ -97,12 +100,13 @@
                                     @if ($formation)
                                         @php
                                             $sub = $souscriptions->firstWhere('formation_id', $formation->id);
+                                            $isExpanded = $isSingleFormation;
                                         @endphp
                                         <div class="accordion-item border-0 border-bottom">
                                             <h2 class="accordion-header" id="heading{{ $formation->id }}">
-                                                <button class="accordion-button collapsed py-3" type="button"
+                                                <button class="accordion-button {{ $isExpanded ? '' : 'collapsed' }} py-3" type="button"
                                                     data-bs-toggle="collapse" data-bs-target="#collapse{{ $formation->id }}"
-                                                    aria-expanded="false" aria-controls="collapse{{ $formation->id }}">
+                                                    aria-expanded="{{ $isExpanded ? 'true' : 'false' }}" aria-controls="collapse{{ $formation->id }}">
                                                     <div class="d-flex align-items-start w-100 me-3">
                                                         <i class="bi bi-book-fill text-primary fs-5 me-3 mt-1"></i>
                                                         <div class="flex-grow-1">
@@ -126,7 +130,7 @@
                                                     </div>
                                                 </button>
                                             </h2>
-                                            <div id="collapse{{ $formation->id }}" class="accordion-collapse collapse"
+                                            <div id="collapse{{ $formation->id }}" class="accordion-collapse collapse {{ $isExpanded ? 'show' : '' }}"
                                                 aria-labelledby="heading{{ $formation->id }}"
                                                 data-bs-parent="#formationsAccordion">
                                                 <div class="accordion-body bg-light">
@@ -134,6 +138,9 @@
 
                                                     <h6 class="fw-bold mb-3"><i class="bi bi-journal-text text-primary me-2"></i> Liste des cours disponibles :</h6>
                                                     <div class="list-group shadow-sm rounded-3">
+                                                        @php
+                                                            $isSingleCourse = ($formation->courses->count() === 1);
+                                                        @endphp
                                                         @foreach ($formation->courses as $course)
                                                             <div class="list-group-item d-flex justify-content-between align-items-center py-3">
                                                                 <div>
@@ -148,18 +155,19 @@
                                                                 </div>
 
                                                                 <div class="d-flex align-items-center">
-                                                                    <a href="{{ route('course-viewer', [$course]) }}" class="btn btn-sm btn-primary me-2">
+                                                                    <a href="{{ route('course-viewer', [$course]) }}" class="btn btn-sm btn-primary me-2 rounded-pill px-3">
                                                                         <i class="bi bi-play-fill"></i> Suivre le cours
                                                                     </a>
-                                                                    <button class="btn btn-sm btn-outline-secondary"
+                                                                    <button class="btn btn-sm btn-outline-secondary rounded-circle"
                                                                         data-bs-toggle="collapse"
-                                                                        data-bs-target="#course{{ $course->id }}">
-                                                                        <i class="bi bi-chevron-down"></i>
+                                                                        data-bs-target="#course{{ $course->id }}"
+                                                                        aria-expanded="{{ $isSingleCourse ? 'true' : 'false' }}">
+                                                                        <i class="bi bi-chevron-{{ $isSingleCourse ? 'up' : 'down' }}"></i>
                                                                     </button>
                                                                 </div>
                                                             </div>
 
-                                                            <div id="course{{ $course->id }}" class="collapse bg-white">
+                                                            <div id="course{{ $course->id }}" class="collapse bg-white {{ $isSingleCourse ? 'show' : '' }}">
                                                                 <div class="list-group list-group-flush border-top">
                                                                     @foreach ($course->chapters as $chapter)
                                                                         <div class="list-group-item d-flex justify-content-between align-items-center ps-4 py-2">
@@ -168,7 +176,7 @@
                                                                                 {{ $chapter->title }}
                                                                             </span>
                                                                             <a href="{{ route('course-viewer', ['course' => $course->id, 'chapterId' => $chapter->id]) }}"
-                                                                                class="btn btn-xs btn-outline-secondary text-decoration-none">
+                                                                                class="btn btn-xs btn-outline-secondary rounded-pill px-2 text-decoration-none">
                                                                                 <i class="bi bi-eye me-1"></i> Accéder
                                                                             </a>
                                                                         </div>
@@ -192,25 +200,32 @@
                             <h5 class="fw-bold text-danger mb-3">
                                 <i class="bi bi-clock-history me-2"></i> Souscriptions Expirées ou En Attente
                             </h5>
-                            <div class="card border-0 shadow-sm rounded-3">
+                            <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
                                 <div class="list-group list-group-flush">
                                     @foreach($expiredSubscriptions as $expSub)
                                         @php
                                             $itemTitle = $expSub->formation ? $expSub->formation->title : ($expSub->course ? $expSub->course->title : ($expSub->chapter ? $expSub->chapter->title : 'Contenu Pédagogique'));
                                         @endphp
-                                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
-                                            <div>
-                                                <h6 class="fw-bold mb-1 text-dark">{{ $itemTitle }}</h6>
-                                                <small class="text-muted">Type: {{ strtoupper($expSub->type) }}</small>
+                                        <div class="list-group-item p-3 border-bottom">
+                                            <!-- Ligne 1: Titre -->
+                                            <div class="fw-bold text-dark fs-6 mb-1">
+                                                <i class="bi bi-journal-x text-danger me-2"></i>{{ $itemTitle }}
                                             </div>
-                                            <div class="text-end">
+
+                                            <!-- Ligne 2: Type -->
+                                            <div class="small text-muted mb-2">
+                                                <i class="bi bi-tag me-1"></i> Type: {{ strtoupper($expSub->type) }}
+                                            </div>
+
+                                            <!-- Ligne 3: Statut -->
+                                            <div class="mb-2">
                                                 @if(!$expSub->is_validated)
-                                                    <span class="badge bg-warning text-dark mb-2 d-inline-block">
-                                                        <i class="bi bi-hourglass me-1"></i> En attente de validation
+                                                    <span class="badge bg-warning text-dark px-2.5 py-1.5 fw-semibold">
+                                                        <i class="bi bi-hourglass-split me-1"></i> En attente de validation
                                                     </span>
                                                 @else
-                                                    <span class="badge bg-danger mb-2 d-inline-block">
-                                                        <i class="bi bi-exclamation-triangle me-1"></i> Expirée le 
+                                                    <span class="badge bg-danger px-2.5 py-1.5 fw-semibold">
+                                                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Expirée le 
                                                         @if($expSub->expires_at)
                                                             {{ is_string($expSub->expires_at) ? \Carbon\Carbon::parse($expSub->expires_at)->format('d/m/Y') : $expSub->expires_at->format('d/m/Y') }}
                                                         @else
@@ -218,11 +233,13 @@
                                                         @endif
                                                     </span>
                                                 @endif
-                                                <div>
-                                                    <a href="{{ route('subscriptions.expired', $expSub->id) }}" class="btn btn-sm btn-outline-danger">
-                                                        <i class="bi bi-arrow-repeat me-1"></i> Demander prolongation
-                                                    </a>
-                                                </div>
+                                            </div>
+
+                                            <!-- Ligne 4: Bouton d'action -->
+                                            <div>
+                                                <a href="{{ route('subscriptions.expired', $expSub->id) }}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                    <i class="bi bi-arrow-repeat me-1"></i> Demander prolongation
+                                                </a>
                                             </div>
                                         </div>
                                     @endforeach
