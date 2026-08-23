@@ -40,17 +40,33 @@
 
 ### **Détection multi-navigateurs**
 ```javascript
-// Détection améliorée et plus précise des navigateurs
-const isChrome = /chrome/.test(userAgent) && !/edge|opr|brave|firefox|safari/.test(userAgent);
-const isFirefox = /firefox/.test(userAgent) && !/seamonkey/.test(userAgent);
-const isEdge = /edg/.test(userAgent) || /edge/.test(userAgent);
-const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
-const isOpera = /opera/.test(userAgent) || /opr/.test(userAgent);
-const isBrave = /brave/.test(userAgent);
+// Détection précise et robuste des navigateurs
+const isEdge = /edg\/|edge\/|edga\/|edgios\//.test(userAgent);
+const isOpera = /opr\/|opera\/|opios\//.test(userAgent);
 const isVivaldi = /vivaldi/.test(userAgent);
-const isTor = /tor/.test(userAgent);
-const isIE = /msie/.test(userAgent) || /trident/.test(userAgent);
+const isSamsung = /samsungbrowser/.test(userAgent);
+const isYandex = /yabrowser/.test(userAgent);
+const isBrave = (navigator.brave && typeof navigator.brave.isBrave === 'function') || /brave/.test(userAgent);
+const isTor = /torbrowser|tor\/|\btor\b/.test(userAgent);
+const isSeamonkey = /seamonkey/.test(userAgent);
+const isFirefox = /firefox|fxios/.test(userAgent) && !isSeamonkey;
+const isIE = /msie|trident/.test(userAgent);
 const isChromium = /chromium/.test(userAgent);
+
+// Google Chrome (Desktop, Android, iOS CriOS)
+// Note: Le User-Agent de Chrome contient "chrome" et "safari", mais PAS edge/opr/vivaldi/samsungbrowser/yabrowser/brave/chromium.
+let isChrome = (/chrome\/|crios\//.test(userAgent)) && !isEdge && !isOpera && !isVivaldi && !isSamsung && !isYandex && !isBrave && !isChromium;
+
+// Support navigator.userAgentData (API moderne Google Chrome)
+if (navigator.userAgentData && Array.isArray(navigator.userAgentData.brands)) {
+    const brands = navigator.userAgentData.brands.map(b => b.brand.toLowerCase());
+    const isEdgeBrand = brands.some(b => b.includes('microsoft edge') || b.includes('edge'));
+    const isOperaBrand = brands.some(b => b.includes('opera'));
+    const isChromeBrand = brands.some(b => b.includes('google chrome'));
+    if (isChromeBrand && !isEdgeBrand && !isOperaBrand && !isBrave) {
+        isChrome = true;
+    }
+}
 ```
 
 ### **Extraction des versions**
