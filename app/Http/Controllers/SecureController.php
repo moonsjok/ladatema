@@ -29,22 +29,6 @@ class SecureController extends Controller
         $user = Auth::user();
         $data = [];
 
-        // Notifications non lues destinées à l'utilisateur connecté
-        $topNotifications = \App\Models\AppNotification::with('sender')
-            ->where(function ($query) use ($user) {
-                $query->where('target_type', 'all')
-                      ->orWhere('target_type', $user->role)
-                      ->orWhere(function ($q) use ($user) {
-                          $q->where('target_type', 'user')
-                            ->where('target_user_id', $user->id);
-                      });
-            })
-            ->whereDoesntHave('reads', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            })
-            ->latest()
-            ->get();
-
         // Récupération des données selon le rôle de l'utilisateur
         if ($user->role === 'dev' || $user->role === 'owner') {
             // Données spécifiques aux administrateurs
@@ -64,7 +48,6 @@ class SecureController extends Controller
 
                 'latestFormations' => Formation::withCount('courses')->latest()->take(5)->get(),
                 'latestUsers' => User::where('role', '!=', 'dev')->latest()->take(5)->get(),
-                'topNotifications' => $topNotifications,
             ];
             return view('authenticated.owners.dashboard', $data);
         }
