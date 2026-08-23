@@ -130,7 +130,7 @@ class StudentActivityLog extends Component
             $activityLog->push([
                 'id' => 'notif_' . $notif->id,
                 'type' => 'notification',
-                'icon' => $notif->is_important ? 'bi-shield-exclamation' : 'bi-bell-fill',
+                'icon' => $notif->is_important ? 'bi-exclamation-circle-fill' : 'bi-bell-fill',
                 'color' => $notif->is_important ? 'danger' : 'info',
                 'title' => 'Notification : ' . $notif->title,
                 'status' => $isRead ? 'Déjà lue' : 'Nouvelle notification',

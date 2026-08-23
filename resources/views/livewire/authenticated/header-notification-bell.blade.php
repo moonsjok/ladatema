@@ -48,14 +48,14 @@
                         <div class="mb-1.5">
                             <div class="rounded-circle d-inline-flex align-items-center justify-content-center shadow-xs" 
                                  style="width: 34px; height: 34px; background: {{ $notif->is_important ? '#fee2e2' : '#e8f0fe' }}; color: {{ $notif->is_important ? '#dc2626' : '#1a73e8' }};">
-                                <i class="bi {{ $notif->is_important ? 'bi-shield-exclamation' : 'bi-megaphone-fill' }} fs-6"></i>
+                                <i class="bi {{ $notif->is_important ? 'bi-exclamation-circle-fill' : 'bi-bell-fill' }} fs-6"></i>
                             </div>
                         </div>
 
                         <!-- Ligne 2 : Importance sur la seconde ligne -->
                         <div class="mb-1.5">
                             <span class="badge bg-{{ $notif->is_important ? 'danger' : 'primary' }} px-2 py-0.5 rounded-pill" style="font-size: 0.68rem; letter-spacing: 0.5px;">
-                                {{ $notif->is_important ? 'URGENT' : 'ANNONCE' }}
+                                {{ $notif->is_important ? 'IMPORTANT' : 'ANNONCE' }}
                             </span>
                             @if($notif->is_read)
                                 <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5 ms-1" style="font-size: 0.65rem;">

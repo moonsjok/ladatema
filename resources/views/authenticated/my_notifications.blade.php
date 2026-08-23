@@ -35,14 +35,14 @@
                                     <div class="mb-2">
                                         <div class="rounded-circle d-inline-flex align-items-center justify-content-center shadow-xs" 
                                              style="width: 40px; height: 40px; background: {{ $notif->is_important ? '#fee2e2' : '#e8f0fe' }}; color: {{ $notif->is_important ? '#dc2626' : '#1a73e8' }};">
-                                            <i class="bi {{ $notif->is_important ? 'bi-shield-exclamation' : 'bi-megaphone-fill' }} fs-5"></i>
+                                            <i class="bi {{ $notif->is_important ? 'bi-exclamation-circle-fill' : 'bi-bell-fill' }} fs-5"></i>
                                         </div>
                                     </div>
 
                                     <!-- Ligne 2 : Importance -->
                                     <div class="mb-2">
                                         <span class="badge bg-{{ $notif->is_important ? 'danger' : 'primary' }} px-2.5 py-1 rounded-pill" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                                            {{ $notif->is_important ? 'URGENT' : 'ANNONCE' }}
+                                            {{ $notif->is_important ? 'IMPORTANT' : 'ANNONCE' }}
                                         </span>
                                         @if($isRead)
                                             <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1 ms-1">

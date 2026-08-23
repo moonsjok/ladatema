@@ -318,14 +318,14 @@
                             <div class="mb-2">
                                 <div class="rounded-circle d-inline-flex align-items-center justify-content-center shadow-xs" 
                                      style="width: 40px; height: 40px; background: {{ $is_important ? '#fee2e2' : '#e8f0fe' }}; color: {{ $is_important ? '#dc2626' : '#1a73e8' }};">
-                                    <i class="bi {{ $is_important ? 'bi-shield-exclamation' : 'bi-megaphone-fill' }} fs-5"></i>
+                                    <i class="bi {{ $is_important ? 'bi-exclamation-circle-fill' : 'bi-bell-fill' }} fs-5"></i>
                                 </div>
                             </div>
 
                             <!-- Ligne 2 : Importance -->
                             <div class="mb-2">
                                 <span class="badge bg-{{ $is_important ? 'danger' : 'primary' }} px-2.5 py-1 rounded-pill" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                                    {{ $is_important ? 'URGENT' : 'ANNONCE' }}
+                                    {{ $is_important ? 'IMPORTANT' : 'ANNONCE' }}
                                 </span>
                             </div>
 
