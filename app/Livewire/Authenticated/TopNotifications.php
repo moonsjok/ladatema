@@ -20,6 +20,34 @@ class TopNotifications extends Component
         }
     }
 
+    public function markAllAsRead()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return;
+        }
+
+        $unreadNotifications = AppNotification::where(function ($query) use ($user) {
+                $query->where('target_type', 'all')
+                      ->orWhere('target_type', $user->role)
+                      ->orWhere(function ($q) use ($user) {
+                          $q->where('target_type', 'user')
+                            ->where('target_user_id', $user->id);
+                      });
+            })
+            ->whereDoesntHave('reads', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->get();
+
+        foreach ($unreadNotifications as $notif) {
+            AppNotificationRead::firstOrCreate([
+                'notification_id' => $notif->id,
+                'user_id' => $user->id,
+            ]);
+        }
+    }
+
     public function render()
     {
         $user = Auth::user();
