@@ -509,95 +509,17 @@ class SubscriptionController extends Controller
      */
     public function subscriptionsOverview()
     {
-        // reuse the same logic to compute counts
-        $studentsWithoutSubscriptions = User::where('role', 'student')
-            ->whereNull('deleted_at')
-            ->whereNotExists(function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('subscriptions')
-                    ->whereRaw('subscriptions.user_id = users.id')
-                    ->whereNull('subscriptions.deleted_at');
-            });
-
-        $countWithout = $studentsWithoutSubscriptions->count();
-
-        // Count distinct users who have at least one non-deleted subscription (any role)
-        $countWith = Subscription::whereNull('subscriptions.deleted_at')
-            ->whereHas('user', function ($query) {
-                $query->whereNull('deleted_at');
-            })
-            ->distinct('user_id')
-            ->count('user_id');
-
-        // Count total subscriptions (only those attached to a formation) to match the per-formation aggregation
-        $totalSubscriptions = Subscription::whereNull('subscriptions.deleted_at')
-            ->whereNotNull('subscriptions.formation_id')
-            ->whereHas('user', function ($q) {
-                $q->whereNull('deleted_at');
-            })
-            ->count();
-
-        // Count users who have more than one non-deleted subscription
-        // Count users (any role) who have more than one non-deleted subscription
-        $countMultiple = Subscription::whereNull('subscriptions.deleted_at')
-            ->whereHas('user', function ($q) {
-                $q->whereNull('deleted_at');
-            })
-            ->select('user_id', DB::raw('COUNT(*) as total'))
-            ->groupBy('user_id')
-            ->havingRaw('COUNT(*) > 1')
-            ->get()
-            ->count();
-
-        // Aggregate subscriptions per formation (only non-deleted subscriptions and formations)
-        // Aggregate subscriptions per formation (only non-deleted subscriptions and formations) across all users
-        // Aggregate by formation using join to avoid N+1: total subscriptions and distinct users per formation
-        $subsPerFormation = Subscription::join('formations', 'formations.id', '=', 'subscriptions.formation_id')
-            ->whereNull('subscriptions.deleted_at')
-            ->whereNotNull('subscriptions.formation_id')
-            ->whereHas('user', function ($q) {
-                $q->whereNull('deleted_at');
-            })
-            ->groupBy('subscriptions.formation_id', 'formations.title')
-            ->select(
-                'subscriptions.formation_id',
-                DB::raw('formations.title as formation_title'),
-                DB::raw('COUNT(*) as total_subscriptions'),
-                DB::raw('COUNT(DISTINCT subscriptions.user_id) as unique_users')
-            )
-            ->get()
-            ->map(function ($row) {
-                return [
-                    'formation_id' => $row->formation_id,
-                    'formation_title' => $row->formation_title ?? 'N/A',
-                    'total_subscriptions' => $row->total_subscriptions,
-                    'unique_users' => $row->unique_users,
-                ];
-            });
-
-        return view('authenticated.owners.subscriptions.overview', [
-            'countWithout' => $countWithout,
-            'countWith' => $countWith,
-            'totalSubscriptions' => $totalSubscriptions,
-            'countMultiple' => $countMultiple,
-            'subsPerFormation' => $subsPerFormation,
-        ]);
+        return redirect()->route('subscriptions.index');
     }
 
-    /**
-     * View for students without subscription (renders DataTable that calls listStudentSubscriptions?type=without_subscriptions)
-     */
     public function studentsWithoutView()
     {
-        return view('authenticated.owners.subscriptions.without-list');
+        return redirect()->route('subscriptions.index');
     }
 
-    /**
-     * View for students with subscription (renders DataTable that calls listStudentSubscriptions?type=with_subscriptions)
-     */
     public function studentsWithView()
     {
-        return view('authenticated.owners.subscriptions.with-list');
+        return redirect()->route('subscriptions.index');
     }
 
 
