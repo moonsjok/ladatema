@@ -281,9 +281,19 @@
             width: 100% !important;
             height: auto !important;
             border-radius: 12px;
-            margin: 1.5rem 0;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
             background-color: #000;
+        }
+
+        .custom-video-wrapper {
+            position: relative;
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .video-controls-toolbar {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
         }
 
         .chapter-body-content iframe {
@@ -357,14 +367,197 @@
     </style>
 
     <script>
-        document.addEventListener('livewire:initialized', () => {
-            Livewire.on('chapter-changed', () => {
-                const card = document.getElementById('chapter-reader-card');
-                if (card) {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        (function() {
+            let audioContextMap = new WeakMap();
+
+            function initVideoPlayerEnhancements() {
+                const container = document.querySelector('.chapter-body-content');
+                if (!container) return;
+
+                const videos = container.querySelectorAll('video');
+                videos.forEach((video) => {
+                    if (video.dataset.enhanced === 'true') return;
+                    video.dataset.enhanced = 'true';
+
+                    // Configuration de chargement optimisé
+                    video.setAttribute('preload', 'metadata');
+                    video.setAttribute('playsinline', 'true');
+                    video.style.width = '100%';
+                    video.style.borderRadius = '12px';
+                    video.style.backgroundColor = '#000';
+
+                    // Si la vidéo n'est pas déjà dans un wrapper responsive, la wrapper
+                    let wrapper = video.closest('.custom-video-wrapper');
+                    if (!wrapper) {
+                        wrapper = document.createElement('div');
+                        wrapper.className = 'custom-video-wrapper my-4 rounded-4 shadow-sm border bg-white p-3';
+                        video.parentNode.insertBefore(wrapper, video);
+                        wrapper.appendChild(video);
+                    }
+
+                    // Création du panneau d'outils audio & vidéo (Boost Volume 100% à 300% & Vitesse)
+                    const controlBar = document.createElement('div');
+                    controlBar.className = 'video-controls-toolbar mt-3 p-3 bg-light rounded-3 border d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3';
+
+                    controlBar.innerHTML = `
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <span class="badge bg-primary text-white rounded-pill px-2.5 py-1.5 small fw-semibold">
+                                <i class="bi bi-volume-up-fill me-1"></i> Amplificateur Son
+                            </span>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Amplificateur sonore">
+                                <button type="button" class="btn btn-primary btn-boost active" data-boost="100">100%</button>
+                                <button type="button" class="btn btn-outline-primary btn-boost" data-boost="150">150%</button>
+                                <button type="button" class="btn btn-outline-primary btn-boost" data-boost="200">200% 🔥</button>
+                                <button type="button" class="btn btn-outline-primary btn-boost" data-boost="300">300% 🚀</button>
+                            </div>
+                            <span class="badge bg-light text-primary border rounded-pill px-2 py-1 small boost-indicator">
+                                Gain : 100% (Normal)
+                            </span>
+                        </div>
+
+                        <div class="d-flex align-items-center flex-wrap gap-2 ms-md-auto">
+                            <span class="badge bg-secondary text-white rounded-pill px-2.5 py-1.5 small fw-semibold">
+                                <i class="bi bi-speedometer2 me-1"></i> Vitesse
+                            </span>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Vitesse de lecture">
+                                <button type="button" class="btn btn-outline-secondary btn-speed" data-speed="0.75">0.75x</button>
+                                <button type="button" class="btn btn-secondary btn-speed active" data-speed="1.0">1.0x</button>
+                                <button type="button" class="btn btn-outline-secondary btn-speed" data-speed="1.25">1.25x</button>
+                                <button type="button" class="btn btn-outline-secondary btn-speed" data-speed="1.5">1.5x</button>
+                                <button type="button" class="btn btn-outline-secondary btn-speed" data-speed="2.0">2.0x</button>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-dark rounded-circle btn-fullscreen ms-1" title="Plein écran">
+                                <i class="bi bi-fullscreen"></i>
+                            </button>
+                        </div>
+                    `;
+
+                    wrapper.appendChild(controlBar);
+
+                    // Initialisation AudioContext et GainNode pour cette vidéo
+                    let audioData = {
+                        audioCtx: null,
+                        source: null,
+                        gainNode: null
+                    };
+
+                    function setupAudioContext() {
+                        if (!audioData.audioCtx) {
+                            try {
+                                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                                audioData.audioCtx = new AudioContext();
+                                audioData.source = audioData.audioCtx.createMediaElementSource(video);
+                                audioData.gainNode = audioData.audioCtx.createGain();
+                                audioData.source.connect(audioData.gainNode);
+                                audioData.gainNode.connect(audioData.audioCtx.destination);
+                                audioContextMap.set(video, audioData);
+                            } catch (e) {
+                                console.warn('Web Audio API non disponible:', e);
+                            }
+                        }
+                        if (audioData.audioCtx && audioData.audioCtx.state === 'suspended') {
+                            audioData.audioCtx.resume();
+                        }
+                    }
+
+                    // Écouteur pour débloquer l'AudioContext lors de la lecture
+                    video.addEventListener('play', () => {
+                        setupAudioContext();
+                    });
+
+                    // Gestion des boutons de Boost de volume (100% -> 300%)
+                    const boostButtons = controlBar.querySelectorAll('.btn-boost');
+                    const boostIndicator = controlBar.querySelector('.boost-indicator');
+
+                    boostButtons.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            setupAudioContext();
+                            const boostValue = parseInt(btn.dataset.boost, 10);
+                            const gainMultiplier = boostValue / 100;
+
+                            if (audioData.gainNode && audioData.audioCtx) {
+                                audioData.gainNode.gain.setValueAtTime(gainMultiplier, audioData.audioCtx.currentTime);
+                            }
+
+                            boostButtons.forEach(b => {
+                                b.classList.remove('active', 'btn-primary');
+                                b.classList.add('btn-outline-primary');
+                            });
+                            btn.classList.remove('btn-outline-primary');
+                            btn.classList.add('active', 'btn-primary');
+
+                            if (boostValue > 100) {
+                                boostIndicator.className = 'badge bg-warning text-dark border border-warning rounded-pill px-2.5 py-1 small fw-bold';
+                                boostIndicator.innerHTML = `🔥 Boost : ${boostValue}%`;
+                            } else {
+                                boostIndicator.className = 'badge bg-light text-primary border rounded-pill px-2 py-1 small';
+                                boostIndicator.innerHTML = `Gain : 100% (Normal)`;
+                            }
+                        });
+                    });
+
+                    // Gestion des boutons de Vitesse de lecture (0.75x -> 2.0x)
+                    const speedButtons = controlBar.querySelectorAll('.btn-speed');
+                    speedButtons.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const speed = parseFloat(btn.dataset.speed);
+                            video.playbackRate = speed;
+
+                            speedButtons.forEach(b => {
+                                b.classList.remove('active', 'btn-secondary');
+                                b.classList.add('btn-outline-secondary');
+                            });
+                            btn.classList.remove('btn-outline-secondary');
+                            btn.classList.add('active', 'btn-secondary');
+                        });
+                    });
+
+                    // Gestion du bouton Plein Écran
+                    const fullscreenBtn = controlBar.querySelector('.btn-fullscreen');
+                    if (fullscreenBtn) {
+                        fullscreenBtn.addEventListener('click', () => {
+                            if (video.requestFullscreen) {
+                                video.requestFullscreen();
+                            } else if (video.webkitRequestFullscreen) {
+                                video.webkitRequestFullscreen();
+                            } else if (video.msRequestFullscreen) {
+                                video.msRequestFullscreen();
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Exécution au chargement
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initVideoPlayerEnhancements);
+            } else {
+                initVideoPlayerEnhancements();
+            }
+
+            // Relancement lors du changement de chapitre Livewire
+            document.addEventListener('livewire:initialized', () => {
+                Livewire.on('chapter-changed', () => {
+                    const card = document.getElementById('chapter-reader-card');
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                    setTimeout(initVideoPlayerEnhancements, 150);
+                });
+            });
+
+            // MutationObserver pour observer les modifications dynamiques du contenu
+            const observer = new MutationObserver(() => {
+                initVideoPlayerEnhancements();
+            });
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const root = document.querySelector('#course-viewer-root');
+                if (root) {
+                    observer.observe(root, { childList: true, subtree: true });
                 }
             });
-        });
+        })();
     </script>
 </div>
 
