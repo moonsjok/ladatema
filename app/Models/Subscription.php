@@ -182,13 +182,22 @@ class Subscription extends Model
                 ? \Carbon\Carbon::parse($this->expires_at)
                 : (clone $this->expires_at);
 
-            $this->expires_at = (clone $currentExpiresAt)->addDays($additionalDays);
+            if ($currentExpiresAt->isFuture()) {
+                // Souscription encore valide : ajouter les jours à la date d'expiration actuelle
+                $this->expires_at = (clone $currentExpiresAt)->addDays($additionalDays);
+            } else {
+                // Souscription déjà expirée : repartir de la date du jour (now) + les jours ajoutés
+                $this->expires_at = now()->addDays($additionalDays);
+            }
         } else {
             $this->expires_at = now()->addDays(max(90, $additionalDays));
         }
 
         $baseDate = $this->created_at ? (clone $this->created_at) : now();
         $this->duration_in_days = max(90, (int)$baseDate->diffInDays($this->expires_at));
+
+        // Activer/valider la souscription
+        $this->is_validated = true;
 
         $this->save();
     }
