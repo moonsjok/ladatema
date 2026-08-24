@@ -13,6 +13,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 use App\Models\Subscription;
 use App\Notifications\CustomVerifyEmail;
+use App\Notifications\CustomResetPassword;
 
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
@@ -25,6 +26,14 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     public function sendEmailVerificationNotification()
     {
         $this->notify(new CustomVerifyEmail);
+    }
+
+    /**
+     * Envoyez la notification de réinitialisation de mot de passe personnalisée.
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new CustomResetPassword($token));
     }
 
     /**
