@@ -20,8 +20,11 @@ class ProfileController extends Controller
      */
     public function submitForm(Request $request)
     {
-
         $user = Auth::user();
+
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Vous devez être connecté.');
+        }
 
         // 🔐 Validation des champs requis
         $validatedData = $request->validate([
@@ -41,8 +44,10 @@ class ProfileController extends Controller
 
         $displayName = $firstPrenom ?? trim($validatedData['prenoms'] . ' ' . $validatedData['nom']);
 
+        $emailChanged = ($user->email !== $validatedData['email']);
+
         // 💾 Mise à jour du profil utilisateur
-        $user->update([
+        $user->fill([
             'name' => $displayName,
             'nom' => $validatedData['nom'],
             'prenoms' => $validatedData['prenoms'],
@@ -51,7 +56,24 @@ class ProfileController extends Controller
             'phone_whatsapp' => $validatedData['phone_whatsapp'],
         ]);
 
-        // ✅ Redirection après succès
-        return redirect()->route('verification.notice')->with('success', 'Profil complété avec succès. Vous pouvez maintenant valider votre adresse e-mail.');
+        if ($emailChanged) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        // 📧 Si l'e-mail a été modifié, envoyer une nouvelle notification de vérification
+        if ($emailChanged) {
+            $user->sendEmailVerificationNotification();
+            return redirect()->route('verification.notice')->with('success', 'Votre adresse e-mail a été modifiée. Un nouvel e-mail de vérification vous a été envoyé.');
+        }
+
+        // 🟢 Si l'e-mail n'est pas encore vérifié
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice')->with('success', 'Profil complété avec succès. Vous pouvez maintenant valider votre adresse e-mail.');
+        }
+
+        // ✅ Si le profil et l'e-mail sont déjà vérifiés, rediriger vers le tableau de bord
+        return redirect()->route('dashboard')->with('success', 'Votre profil a été mis à jour avec succès.');
     }
 }
