@@ -158,7 +158,38 @@ class StudentActivityLog extends Component
             }
         }
 
-        // 5. Confirmation e-mail
+        // 5. Profil utilisateur (Création du compte & Mises à jour du profil)
+        if ($user->created_at) {
+            $activityLog->push([
+                'id' => 'user_create_' . $user->id,
+                'type' => 'profile_created',
+                'icon' => 'bi-person-plus-fill',
+                'color' => 'success',
+                'title' => 'Création du Compte',
+                'status' => 'Compte Créé',
+                'description' => "Création de votre compte sur la plateforme sous l'e-mail : <strong>" . e($user->email) . "</strong>.",
+                'date' => $user->created_at,
+            ]);
+        }
+
+        if ($user->updated_at && $user->created_at && $user->updated_at->diffInMinutes($user->created_at) > 1) {
+            $contactsInfo = [];
+            if (!empty($user->phone_call)) $contactsInfo[] = "Tél : " . e($user->phone_call);
+            if (!empty($user->phone_whatsapp)) $contactsInfo[] = "WhatsApp : " . e($user->phone_whatsapp);
+            $contactsText = !empty($contactsInfo) ? " (" . implode(', ', $contactsInfo) . ")" : "";
+
+            $activityLog->push([
+                'id' => 'user_update_' . $user->id,
+                'type' => 'profile_updated',
+                'icon' => 'bi-person-gear',
+                'color' => 'info',
+                'title' => 'Mise à Jour des Informations du Profil',
+                'status' => 'Profil Mis à Jour',
+                'description' => "Mise à jour des informations personnelles et coordonnées pour <strong>" . e($user->name) . "</strong>{$contactsText}.",
+                'date' => $user->updated_at,
+            ]);
+        }
+
         if ($user->email_verified_at) {
             $activityLog->push([
                 'id' => 'email_verif_' . $user->id,
