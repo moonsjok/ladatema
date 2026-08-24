@@ -48,6 +48,13 @@ class SecureController extends Controller
 
                 'latestFormations' => Formation::withCount('courses')->latest()->take(5)->get(),
                 'latestUsers' => User::where('role', '!=', 'dev')->latest()->take(5)->get(),
+                'pendingSubscriptionsList' => Subscription::where('is_validated', 0)
+                    ->whereHas('user', function ($query) {
+                        $query->where('role', 'student');
+                    })
+                    ->with(['user', 'formation', 'course', 'chapter'])
+                    ->latest()
+                    ->get(),
             ];
             return view('authenticated.owners.dashboard', $data);
         }

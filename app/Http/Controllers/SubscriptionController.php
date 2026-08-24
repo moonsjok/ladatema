@@ -534,15 +534,28 @@ class SubscriptionController extends Controller
             $itemTitle = $subscription->formation ? $subscription->formation->title : ($subscription->course ? $subscription->course->title : ($subscription->chapter ? $subscription->chapter->title : ''));
             $userName = $subscription->user ? $subscription->user->name : '';
 
-            return response()->json([
-                'success' => true,
-                'message' => "La souscription " . $subscription->type . " : " . $itemTitle . " de " . $userName . " a été validée.",
-            ]);
+            $msg = "La souscription " . $subscription->type . " : " . $itemTitle . " de " . $userName . " a été validée avec succès.";
+            Alert::success('Souscription Validée', $msg);
+
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $msg,
+                ]);
+            }
+
+            return redirect()->back()->with('success', $msg);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => "Une erreur est survenue lors de la validation.",
-            ], 500);
+            Alert::error('Erreur', "Une erreur est survenue lors de la validation : " . $e->getMessage());
+
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Une erreur est survenue lors de la validation.",
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', "Une erreur est survenue lors de la validation.");
         }
     }
 
