@@ -63,6 +63,14 @@
         </a>
     </li>
 
+    <!-- Souscriptions -->
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('subscriptions.*') ? 'active-link' : '' }} toggle-menu"
+            href="{{ route('subscriptions.index') }}">
+            <i class="bi bi-credit-card"></i> Souscriptions
+        </a>
+    </li>
+
     <!-- Bouton de déconnexion -->
     <div class="mt-auto">
         <a class="nav-item nav-link logout " href="{{ route('logout') }}"

@@ -11,7 +11,7 @@
 
             <!-- Statistiques globales -->
             <div class="col-md-3">
-                <a href="{{ route('subscriptions.students') }}" tabindex="0" id="card-students"
+                <a href="{{ route('subscriptions.index') }}" tabindex="0" id="card-students"
                     class="text-decoration-none card shadow-sm border-0">
                     <div class="card-body text-center">
                         <i class="bi bi-people-fill fs-1 text-primary"></i>
@@ -44,17 +44,16 @@
             </div>
 
             <div class="col-md-3">
-                <a href="{{ route('subscriptions.overview') }}" tabindex="0" id="card-subscriptions"
+                <a href="{{ route('subscriptions.index') }}" tabindex="0" id="card-subscriptions"
                     class="text-decoration-none card shadow-sm border-0">
                     <div class="card-body text-center">
                         <i class="bi bi-card-checklist fs-1 text-danger"></i>
                         <h5 class="card-title mt-2">Souscription(s)</h5>
                         <p class="fs-4 fw-bold">{{ $totalSubscriptions ?? 0 }}</p>
                         @if ($totalPendingSubscriptions > 0)
-                            <p class="fs-4 fw-bold">{{ $totalSubscriptions ?? 0 }}</p>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                 {{ $totalPendingSubscriptions }}
-                                <span class="visually-hidden">Peding Subscriptions</span>
+                                <span class="visually-hidden">Pending Subscriptions</span>
                             </span>
                         @endif
                     </div>
@@ -85,7 +84,7 @@
             </a>
 
             <!-- Liste des derniers utilisateurs inscrits -->
-            <a href="{{ route('subscriptions.students') }}" class="col-md-6  text-decoration-none">
+            <a href="{{ route('subscriptions.index') }}" class="col-md-6  text-decoration-none">
                 <div class="card shadow-sm">
                     <div class="card-header bg-success text-white">
                         <i class="bi bi-person-plus-fill"></i> Nouveaux utilisateurs
