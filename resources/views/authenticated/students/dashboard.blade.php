@@ -92,21 +92,24 @@
                                                             $isSingleCourse = ($formation->courses->count() === 1);
                                                         @endphp
                                                         @foreach ($formation->courses as $course)
-                                                            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
-                                                                <div>
+                                                            <div class="list-group-item p-3 border-bottom">
+                                                                <!-- Ligne 1: Titre du cours -->
+                                                                <div class="fw-bold text-dark fs-6 mb-1">
                                                                     <a href="{{ route('course-viewer', [$course]) }}"
-                                                                        class="fw-bold text-decoration-none text-dark fs-6">
-                                                                        <i class="bi bi-play-circle-fill text-primary me-2"></i>
-                                                                        {{ $course->title }}
+                                                                        class="text-decoration-none text-dark fw-bold">
+                                                                        <i class="bi bi-play-circle-fill text-primary me-2"></i>{{ $course->title }}
                                                                     </a>
-                                                                    <div class="small text-muted mt-1">
-                                                                        <i class="bi bi-layers me-1"></i> {{ $course->chapters->count() }} chapitre(s)
-                                                                    </div>
                                                                 </div>
 
-                                                                <div class="d-flex align-items-center">
-                                                                    <a href="{{ route('course-viewer', [$course]) }}" class="btn btn-sm btn-primary me-2 rounded-pill px-3">
-                                                                        <i class="bi bi-play-fill"></i> Suivre le cours
+                                                                <!-- Ligne 2: Nombre de chapitres -->
+                                                                <div class="small text-muted mb-2">
+                                                                    <i class="bi bi-layers me-1"></i> {{ $course->chapters->count() }} chapitre(s)
+                                                                </div>
+
+                                                                <!-- Ligne 3: Bouton d'action -->
+                                                                <div class="d-flex align-items-center justify-content-between pt-1">
+                                                                    <a href="{{ route('course-viewer', [$course]) }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                                                        <i class="bi bi-play-fill me-1"></i> Suivre le cours
                                                                     </a>
                                                                     <button class="btn btn-sm btn-outline-secondary rounded-circle"
                                                                         data-bs-toggle="collapse"
