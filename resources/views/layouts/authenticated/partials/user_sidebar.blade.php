@@ -1,3 +1,7 @@
+<div class="px-2 pt-2">
+    @include('layouts.partials.user_account_badge', ['mode' => 'sidebar'])
+</div>
+
 <ul class="nav flex-column">
 
     <!-- Auth user name -->

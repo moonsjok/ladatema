@@ -60,17 +60,18 @@
                 <div
                     class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-0 border-bottom">
 
-                    <div class="dashboard-page-header ">
-                        <span class="d-none d-sm-block ">
-                            <div class="container d-none d-sm-block ml-5 mt-3">
-                                <div class="row">
-                                    <div class="col-10 text-center">
-                                        @yield('page-title')
+                    <div class="dashboard-page-header w-100">
+                        <span class="d-none d-sm-block w-100">
+                            <div class="container-fluid p-0 mt-1">
+                                <div class="row align-items-center">
+                                    <div class="col text-start">
+                                        <h4 class="mb-0 fw-bold text-dark">@yield('page-title')</h4>
                                     </div>
-                                    <div class="col-2 d-flex justify-content-end align-items-center p-0">
+                                    <div class="col-auto d-flex justify-content-end align-items-center">
+                                        @include('layouts.partials.user_account_badge')
                                         @livewire('authenticated.header-notification-bell')
-                                        <a class=" text-danger fw-bold mb-0 " href="{{ route('logout') }}"
-                                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                        <a class="text-danger fw-bold mb-0 ms-2" href="{{ route('logout') }}"
+                                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();" title="Déconnexion">
                                             <i class="bi bi-box-arrow-right"></i>
                                         </a>
                                         <form id="logout-form" action="{{ route('logout') }}" method="POST"
@@ -80,13 +81,17 @@
                                     </div>
                                 </div>
                             </div>
-
                         </span>
 
                         <span class="d-block d-sm-none">
-                            <h1>
-                                @include('layouts.shares.logo')
-                            </h1>
+                            <div class="d-flex align-items-center justify-content-between py-1">
+                                <div>
+                                    @include('layouts.shares.logo')
+                                </div>
+                                <div class="ms-2">
+                                    @include('layouts.partials.user_account_badge')
+                                </div>
+                            </div>
                         </span>
                     </div>
 
