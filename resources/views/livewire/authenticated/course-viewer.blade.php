@@ -366,6 +366,7 @@
         }
     </style>
 
+@script
     <script>
         (function() {
             let audioContextMap = new WeakMap();
@@ -536,14 +537,12 @@
             }
 
             // Relancement lors du changement de chapitre Livewire
-            document.addEventListener('livewire:initialized', () => {
-                Livewire.on('chapter-changed', () => {
-                    const card = document.getElementById('chapter-reader-card');
-                    if (card) {
-                        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                    setTimeout(initVideoPlayerEnhancements, 150);
-                });
+            $wire.on('chapter-changed', () => {
+                const card = document.getElementById('chapter-reader-card');
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                setTimeout(initVideoPlayerEnhancements, 150);
             });
 
             // MutationObserver pour observer les modifications dynamiques du contenu
@@ -559,5 +558,6 @@
             });
         })();
     </script>
+@endscript
 </div>
 
