@@ -23,6 +23,16 @@ class EnsureProfileIsComplete
             return redirect()->route('login')->with('error', 'Vous devez être connecté pour accéder à cette page.');
         }
 
+        // Vérifier si le compte est désactivé par l'administration
+        if (isset($user->is_active) && $user->is_active === false) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->with('error', 'Votre compte a été désactivé par l\'administration. Veuillez contacter le support pour plus d\'informations.');
+        }
+
         // Vérifier si l'adresse e-mail est vérifiée ET si le profil est complet
         $isEmailVerified = $user->hasVerifiedEmail();
         $isProfileComplete = !empty($user->nom) &&

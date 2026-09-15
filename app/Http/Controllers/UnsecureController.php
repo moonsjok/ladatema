@@ -26,7 +26,31 @@ class UnsecureController extends Controller
     public function __construct() {}
 
     /**
-     * Display the home page.
+     * Display the main Lada Tema Group landing page.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function groupHome(Request $request)
+    {
+        SEOMeta::setTitle("LADATEMA GROUP — Cabinet d'Experts Comptables, Audit, Finance, RH & Bourse");
+        SEOMeta::setDescription("LADATEMA GROUP : Votre partenaire stratégique pluridisciplinaire. Découvrez nos pôles d'excellence : Lada Research, Lada Bourse, Lada RH et Lada Finance.");
+        SEOMeta::addKeyword(['Lada Tema Group', 'Lada Research', 'Lada Bourse', 'Lada RH', 'Lada Finance', 'experts comptables', 'audit', 'conseil', 'BRVM', 'recrutement']);
+
+        OpenGraph::setTitle("LADATEMA GROUP — L'Excellence Multidisciplinaire");
+        OpenGraph::setDescription("Découvrez l'ensemble des filiales et pôles d'expertise de LADATEMA GROUP : Research & Formation, Bourse, Ressources Humaines et Finance.");
+        OpenGraph::addImage(url(asset('images/LOGO_LADATEMA_SARL.png')));
+
+        Twitter::setTitle("LADATEMA GROUP — L'Excellence Multidisciplinaire");
+        Twitter::setImage(url(asset('images/LOGO_LADATEMA_SARL.png')));
+
+        $data['formations'] = Formation::latest()->limit(4)->get();
+
+        return view('group', $data);
+    }
+
+    /**
+     * Display the Lada Tema Research home page.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View

@@ -127,6 +127,14 @@
         </a>
     </li>
 
+    <!-- Utilisateurs -->
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('users.*') ? 'active-link' : '' }} toggle-menu"
+            href="{{ route('users.index') }}">
+            <i class="bi bi-person-gear"></i> Utilisateurs
+        </a>
+    </li>
+
     <!-- Notifications & Annonces -->
     <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('app-notifications.*') ? 'active-link' : '' }} toggle-menu"

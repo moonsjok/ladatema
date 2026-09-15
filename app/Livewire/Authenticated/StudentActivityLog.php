@@ -190,6 +190,19 @@ class StudentActivityLog extends Component
             ]);
         }
 
+        if (isset($user->is_active) && $user->is_active === false && $user->updated_at) {
+            $activityLog->push([
+                'id' => 'user_deactive_' . $user->id,
+                'type' => 'account_deactivated',
+                'icon' => 'bi-person-x-fill',
+                'color' => 'danger',
+                'title' => 'Compte Désactivé par l\'Administration',
+                'status' => 'Accès Suspendu',
+                'description' => "Votre compte a été temporairement désactivé par l'administration. Veuillez contacter le support pour toute assistance.",
+                'date' => $user->updated_at,
+            ]);
+        }
+
         if ($user->email_verified_at) {
             $activityLog->push([
                 'id' => 'email_verif_' . $user->id,

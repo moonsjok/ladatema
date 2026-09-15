@@ -11,6 +11,7 @@
                 aria-label="Slide 1"></button>
             <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="1" aria-label="Slide 2"></button>
             <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="2" aria-label="Slide 3"></button>
+            <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="3" aria-label="Slide 3"></button>
         </div>
         <div class="carousel-inner p-5">
 
@@ -32,7 +33,7 @@
                                 <a href="#" class="btn btn-primary btn-lg  mt-3">
                                     <i class="bi bi-briefcase"></i> Nos prestations
                                 </a>
-                                <a href="{{route('contact.form')}}" class="btn btn-secondary btn-lg  mt-3">
+                                <a href="{{ route('contact.form') }}" class="btn btn-secondary btn-lg  mt-3">
                                     <i class="bi bi-chat-dots"></i> Nous contacter
                                 </a>
                             </p>
@@ -91,6 +92,58 @@
                     </div>
                 </div>
             </div>
+            <!-- Quatrième slide - Lada bourse -->
+
+            <div class="carousel-item" data-bs-interval="5000">
+                <div class="container h-100 py-4">
+                    <div class="row align-items-center h-100">
+
+                        <!-- CONTENU À GAUCHE -->
+                        <div class="col-lg-6 col-md-6 text-center text-md-start">
+
+                            <h1 class="fw-bold display-5 mb-3">
+                                Investissez à la BRVM
+                                <br>
+                                en toute <span class="text-warning">confiance</span>
+                            </h1>
+
+                            <p class="lead mb-4">
+                                Bénéficiez de notre expertise pour faire fructifier
+                                votre capital et développer vos compétences boursières
+                                sur la BRVM (Bourse Régionale des Valeurs Mobilières).
+                            </p>
+
+                            <!-- BOUTONS -->
+                            <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+
+                                <a href="{{ asset('html_files/ladabourse.html') }}"
+                                    class="btn btn-primary btn-lg px-4 py-3">
+                                    <i class="bi bi-graph-up-arrow me-2"></i>
+                                    Conseil en investissement
+                                </a>
+
+                                <a href="{{ route('guest.formationsList') }}"
+                                    class="btn btn-outline-primary btn-lg px-4 py-3">
+                                    <i class="bi bi-mortarboard me-2"></i>
+                                    Formation boursière
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                        <!-- IMAGE À DROITE -->
+                        <div class="col-lg-6 col-md-6 d-flex justify-content-center align-items-center mt-4 mt-md-0">
+
+                            <img src="{{ asset('images/ladabourse_slider_image.png') }}" class="img-fluid brvm-hero-image"
+                                alt="Investissement à la BRVM">
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
 
         </div>
 

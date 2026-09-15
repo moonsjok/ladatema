@@ -64,6 +64,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         'prenoms',
         'email',
         'password',
+        'role',
+        'is_active',
         'phone_call',
         'phone_whatsapp',
     ];
@@ -88,6 +90,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 

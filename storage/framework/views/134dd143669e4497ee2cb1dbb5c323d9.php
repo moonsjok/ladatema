@@ -13,6 +13,7 @@
     }
 </style>
 
-<a href="{{ route('group.home') }}" class="logo text-decoration-none">
-    <img class="img-fluid" src="{{ asset('images/LOGO_LADATEMA_SARL.png') }}" load="lazy">
+<a href="<?php echo e(route('group.home')); ?>" class="logo text-decoration-none">
+    <img class="img-fluid" src="<?php echo e(asset('images/LOGO_LADATEMA_SARL.png')); ?>" load="lazy">
 </a>
+<?php /**PATH D:\www\ladatema\resources\views/layouts/shares/logo.blade.php ENDPATH**/ ?>

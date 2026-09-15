@@ -47,7 +47,8 @@ Route::get('artisan-clear-cache', function () {
 
 Route::get('/sitemap.xml', [SitemapController::class, 'generate'])->name('sitemap');
 
-Route::get('/', [UnsecureController::class, 'index'])->name("welcome");
+Route::get('/', [UnsecureController::class, 'groupHome'])->name('group.home');
+Route::get('/research', [UnsecureController::class, 'index'])->name('welcome');
 Route::get('/nos/services', [UnsecureController::class, 'services'])->name("nos.services");
 Route::get('/contact', [UnsecureController::class, 'showContactForm'])->name('contact.form');
 Route::post('/contact', [UnsecureController::class, 'sendContactForm'])->name('contact.send');
@@ -223,6 +224,11 @@ Route::middleware(['auth', 'profile.complete'])->group(function () {
 
         // ✅ Gestion des souscriptions (CRUD complet)
         Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+
+        // ✅ Gestion des Utilisateurs (Dev & Owner)
+        Route::get('users-management', function () {
+            return view('authenticated.owners.users.index');
+        })->name('users.index');
         Route::get('subscriptions/create', [SubscriptionController::class, 'create'])->name('subscriptions.create');
         Route::post('subscriptions', [SubscriptionController::class, 'storeSubscription'])->name('subscriptions.store');
         Route::get('subscriptions/{subscription}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');

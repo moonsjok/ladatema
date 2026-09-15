@@ -655,5 +655,173 @@ footer.footer{
     max-height: 500px;
 }
 
+/* LADA TEMA GROUP HOMEPAGE STYLES */
+@media (min-width: 992px) {
+    .group-viewport {
+        min-height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+}
+
+.hero-compact {
+    background: linear-gradient(135deg, #071533 0%, #0E2E72 65%, #122860 100%);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    color: #ffffff;
+    padding: 2.25rem 2rem;
+    box-shadow: 0 16px 40px rgba(14, 46, 114, 0.25);
+}
+
+.hero-compact::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -10%;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.22) 0%, rgba(0, 0, 0, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.pill-badge {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #F1F5F9;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.4rem 1.1rem;
+    border-radius: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.portal-card-unified {
+    background: #ffffff;
+    border: 1px solid #E2E8F0;
+    border-radius: 18px;
+    padding: 1.6rem 1.35rem;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 6px 20px rgba(14, 46, 114, 0.05);
+    position: relative;
+}
+
+.portal-card-unified:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(14, 46, 114, 0.18);
+    border-color: rgba(37, 99, 235, 0.4);
+}
+
+.icon-box-brand {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563EB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.portal-card-unified:hover .icon-box-brand {
+    background: #2563EB;
+    color: #FFFFFF;
+    transform: scale(1.1) rotate(3deg);
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.3);
+}
+
+.btn-brand-action {
+    background: linear-gradient(135deg, #0E2E72 0%, #2563EB 100%);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.7rem 1.2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(14, 46, 114, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-brand-action::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn-brand-action:hover::after {
+    left: 100%;
+}
+
+.btn-brand-action:hover {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.4);
+}
+
+.btn-brand-action:active {
+    transform: translateY(0) scale(0.99);
+}
+
+.btn-brand-action i {
+    transition: transform 0.3s ease;
+}
+
+.btn-brand-action:hover i {
+    transform: translateX(4px);
+}
+
+.portal-logo-box {
+    height: 70px;
+    padding: 8px 16px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.portal-card-unified:hover .portal-logo-box {
+    background: #FFFFFF;
+    border-color: #2563EB;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15);
+    transform: translateY(-2px);
+}
+
+.portal-logo-img {
+    max-height: 52px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+
+
 
 
